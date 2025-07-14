@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards de Inglês com Avaliação de Pronúncia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .card-face-back {
+            transform: rotateY(180deg);
+        }
+        #mic-icon.recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-content {
+            transition: transform 0.25s ease;
+        }
+        .status-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-content" class="w-full max-w-md mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">English Flashcards</h1>
+        <p class="text-center text-gray-600 dark:text-gray-400 mb-4">Selecione um deck, estude e pratique.</p>
+        
+        <!-- Controles do Deck -->
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+            <div class="flex items-center justify-between">
+                <select id="deck-selector" class="w-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2"></select>
+                <button id="new-deck-btn" title="Novo Deck" class="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="flex items-center justify-between mt-4">
+                <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">Adicionar Card</button>
+                <button id="shuffle-btn" class="text-sm bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">Embaralhar</button>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Pontuação</p>
+                    <p id="score" class="font-bold text-lg text-blue-600 dark:text-blue-400">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flashcard -->
+        <div id="flashcard-container" class="perspective-1000 min-h-[16rem]">
+            <!-- O conteúdo do flashcard será inserido aqui pelo JS -->
+        </div>
+        <div class="mt-4 flex justify-center">
+            <button id="flip-button" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-transform transform hover:scale-105">Virar Card</button>
+        </div>
+
+        <!-- Status do Card -->
+        <div class="mt-6 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+            <h3 class="text-md font-semibold mb-3 text-center">Status do Card</h3>
+            <div id="status-buttons" class="flex justify-around">
+                <button data-status="new" class="status-btn text-sm py-2 px-3 rounded-lg bg-gray-300 dark:bg-gray-600 hover:bg-gray-400">Novo</button>
+                <button data-status="in_progress" class="status-btn text-sm py-2 px-3 rounded-lg bg-yellow-400 dark:bg-yellow-500 hover:bg-yellow-500">Estudando</button>
+                <button data-status="learned" class="status-btn text-sm py-2 px-3 rounded-lg bg-green-400 dark:bg-green-500 hover:bg-green-500">Aprendido</button>
+            </div>
+        </div>
+
+        <!-- Prática de Pronúncia -->
+        <div class="mt-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+            <h3 class="text-lg font-semibold mb-4 text-center">Pratique sua Pronúncia</h3>
+            <div class="flex items-center justify-center space-x-4">
+                <button id="listen-button" title="Ouvir a pronúncia" class="w-16 h-16 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-md"><i class="fas fa-volume-up text-2xl"></i></button>
+                <button id="mic-button" title="Gravar sua pronúncia" class="w-20 h-20 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-lg"><i id="mic-icon" class="fas fa-microphone text-3xl"></i></button>
+            </div>
+            <div id="feedback" class="mt-4 text-center h-12 flex items-center justify-center"><p id="feedback-text" class="text-lg font-medium"></p></div>
+        </div>
+        
+        <!-- Navegação -->
+        <div class="mt-6 flex justify-between">
+            <button id="prev-button" class="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"><i class="fas fa-arrow-left"></i> Anterior</button>
+            <button id="next-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">Próximo <i class="fas fa-arrow-right"></i></button>
+        </div>
+        <div class="text-center mt-4"><p id="card-counter" class="text-sm text-gray-500 dark:text-gray-400"></p></div>
+    </div>
+
+    <!-- Modal para Adicionar Card/Deck -->
+    <div id="modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+        <div class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm transform -translate-y-10">
+            <h2 id="modal-title" class="text-2xl font-bold mb-6 text-center"></h2>
+            <div id="add-card-form">
+                <div class="mb-4">
+                    <label for="new-card-en" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Inglês</label>
+                    <input type="text" id="new-card-en" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                </div>
+                <div class="mb-6">
+                    <label for="new-card-pt" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Português</label>
+                    <input type="text" id="new-card-pt" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                </div>
+            </div>
+             <div id="add-deck-form" class="hidden">
+                <div class="mb-4">
+                    <label for="new-deck-name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Nome do Novo Deck</label>
+                    <input type="text" id="new-deck-name" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button id="modal-cancel-btn" class="py-2 px-5 bg-gray-300 dark:bg-gray-600 rounded-lg hover:bg-gray-400">Cancelar</button>
+                <button id="modal-save-btn" class="py-2 px-5 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos da UI
+            const ui = {
+                deckSelector: document.getElementById('deck-selector'),
+                score: document.getElementById('score'),
+                flashcardContainer: document.getElementById('flashcard-container'),
+                cardCounter: document.getElementById('card-counter'),
+                feedbackText: document.getElementById('feedback-text'),
+                micButton: document.getElementById('mic-button'),
+                micIcon: document.getElementById('mic-icon'),
+                modal: document.getElementById('modal'),
+                modalTitle: document.getElementById('modal-title'),
+                addCardForm: document.getElementById('add-card-form'),
+                addDeckForm: document.getElementById('add-deck-form'),
+                newCardEn: document.getElementById('new-card-en'),
+                newCardPt: document.getElementById('new-card-pt'),
+                newDeckName: document.getElementById('new-deck-name'),
+                flipButton: document.getElementById('flip-button'),
+                statusButtonsContainer: document.getElementById('status-buttons'),
+            };
+
+            // Estado do Aplicativo
+            let state = {
+                decks: {},
+                currentDeckName: null,
+                currentCardIndex: 0,
+            };
+
+            const STORAGE_KEY = 'flashcard_app_data_v2';
+
+            // --- LÓGICA DE DADOS (localStorage) ---
+
+            function saveData() {
+                const dataToSave = {
+                    decks: state.decks,
+                    currentDeckName: state.currentDeckName
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            }
+
+            function loadData() {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    state.decks = parsedData.decks;
+                    state.currentDeckName = parsedData.currentDeckName;
+                } else {
+                    // Cria dados padrão se não houver nada salvo
+                    state.decks = {
+                        "Verbs": { name: "Verbs", score: 0, cards: [{en: "to study", pt: "estudar", status: "new"}] },
+                        "Vocabulary": { name: "Vocabulary", score: 0, cards: [{en: "challenge", pt: "desafio", status: "new"}] },
+                        "Idiomatic Expressions": { name: "Idiomatic Expressions", score: 0, cards: [{en: "break a leg", pt: "boa sorte", status: "new"}] },
+                        "Superlatives": { name: "Superlatives", score: 0, cards: [{en: "the best", pt: "o melhor", status: "new"}] },
+                    };
+                    state.currentDeckName = "Verbs";
+                    saveData();
+                }
+
+                if (!state.currentDeckName || !state.decks[state.currentDeckName]) {
+                    state.currentDeckName = Object.keys(state.decks)[0] || null;
+                }
+                state.currentCardIndex = 0;
+                render();
+            }
+
+            // --- LÓGICA DE RENDERIZAÇÃO ---
+
+            function render() {
+                if (!state.currentDeckName) {
+                    // Lida com o caso de não haver decks
+                    ui.flashcardContainer.innerHTML = `<div class="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">Crie um deck para começar!</div>`;
+                    ui.deckSelector.innerHTML = '';
+                    ui.score.textContent = '0';
+                    ui.cardCounter.textContent = '0 de 0';
+                    return;
+                }
+                renderDeckSelector();
+                updateCard();
+            }
+            
+            function renderDeckSelector() {
+                ui.deckSelector.innerHTML = '';
+                for (const deckName in state.decks) {
+                    const option = document.createElement('option');
+                    option.value = deckName;
+                    option.textContent = deckName;
+                    if (deckName === state.currentDeckName) {
+                        option.selected = true;
+                    }
+                    ui.deckSelector.appendChild(option);
+                }
+            }
+
+            function updateCard() {
+                const deck = state.decks[state.currentDeckName];
+                if (!deck || deck.cards.length === 0) {
+                    ui.flashcardContainer.innerHTML = `<div class="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">Adicione um card a este deck para começar!</div>`;
+                    ui.cardCounter.textContent = '0 de 0';
+                    ui.score.textContent = deck ? deck.score : 0;
+                    // Desabilita botões que não fazem sentido sem cards
+                    ui.statusButtonsContainer.style.opacity = '0.5';
+                    ui.statusButtonsContainer.style.pointerEvents = 'none';
+                    return;
+                } 
+                
+                ui.statusButtonsContainer.style.opacity = '1';
+                ui.statusButtonsContainer.style.pointerEvents = 'auto';
+                
+                ui.flashcardContainer.innerHTML = `
+                    <div id="flashcard" class="card relative w-full h-64">
+                        <div class="card-face card-face-front absolute w-full h-full flex items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 text-center">
+                            <div><p class="text-gray-500 dark:text-gray-400 mb-2">Tradução</p><h2 id="card-word-pt" class="text-3xl font-semibold"></h2></div>
+                        </div>
+                        <div class="card-face card-face-back absolute w-full h-full flex items-center justify-center bg-blue-500 dark:bg-blue-600 text-white rounded-2xl shadow-lg p-6 text-center">
+                            <div><p class="text-blue-200 mb-2">Em Inglês</p><h2 id="card-word-en" class="text-4xl font-bold"></h2></div>
+                        </div>
+                    </div>`;
+                
+                const card = deck.cards[state.currentCardIndex];
+                document.getElementById('card-word-en').textContent = card.en;
+                document.getElementById('card-word-pt').textContent = card.pt;
+                
+                ui.cardCounter.textContent = `Card ${state.currentCardIndex + 1} de ${deck.cards.length}`;
+                ui.score.textContent = deck.score;
+                ui.feedbackText.textContent = '';
+                ui.feedbackText.className = 'text-lg font-medium';
+                
+                updateStatusButtons(card.status);
+            }
+
+            function updateStatusButtons(currentStatus) {
+                document.querySelectorAll('.status-btn').forEach(btn => {
+                    btn.classList.remove('active', 'border-2', 'border-blue-500');
+                    if (btn.dataset.status === currentStatus) {
+                        btn.classList.add('active', 'border-2', 'border-blue-500');
+                    }
+                });
+            }
+            
+            // --- EVENT HANDLERS ---
+            
+            ui.deckSelector.addEventListener('change', (e) => {
+                state.currentDeckName = e.target.value;
+                state.currentCardIndex = 0;
+                render();
+                saveData();
+            });
+
+            document.getElementById('next-button').addEventListener('click', () => {
+                const deck = state.decks[state.currentDeckName];
+                if (deck && deck.cards.length > 0) {
+                    state.currentCardIndex = (state.currentCardIndex + 1) % deck.cards.length;
+                    updateCard();
+                }
+            });
+
+            document.getElementById('prev-button').addEventListener('click', () => {
+                const deck = state.decks[state.currentDeckName];
+                if (deck && deck.cards.length > 0) {
+                    state.currentCardIndex = (state.currentCardIndex - 1 + deck.cards.length) % deck.cards.length;
+                    updateCard();
+                }
+            });
+            
+            document.getElementById('shuffle-btn').addEventListener('click', () => {
+                const deck = state.decks[state.currentDeckName];
+                if (deck && deck.cards.length > 1) {
+                    for (let i = deck.cards.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [deck.cards[i], deck.cards[j]] = [deck.cards[j], deck.cards[i]];
+                    }
+                    state.currentCardIndex = 0;
+                    updateCard();
+                    saveData();
+                }
+            });
+            
+            ui.statusButtonsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('status-btn')) {
+                    const newStatus = e.target.dataset.status;
+                    const deck = state.decks[state.currentDeckName];
+                    const card = deck.cards[state.currentCardIndex];
+                    
+                    if (card.status === newStatus) return;
+                    
+                    const oldStatus = card.status;
+                    card.status = newStatus;
+                    
+                    if (newStatus === 'learned' && oldStatus !== 'learned') {
+                        deck.score += 1;
+                    } else if (oldStatus === 'learned' && newStatus !== 'learned') {
+                        deck.score -= 1;
+                    }
+                    
+                    updateCard();
+                    saveData();
+                }
+            });
+
+            ui.flipButton.addEventListener('click', () => {
+                const flashcardEl = document.getElementById('flashcard');
+                if (flashcardEl) {
+                    flashcardEl.classList.toggle('is-flipped');
+                }
+            });
+
+            // --- LÓGICA DO MODAL (ADICIONAR CARD/DECK) ---
+            
+            let modalMode = 'card';
+
+            function openModal(mode) {
+                modalMode = mode;
+                ui.modal.classList.remove('hidden');
+                setTimeout(() => {
+                    ui.modal.classList.remove('opacity-0');
+                    ui.modal.querySelector('.modal-content').classList.remove('-translate-y-10');
+                }, 10);
+
+                if (mode === 'card') {
+                    ui.modalTitle.textContent = `Adicionar Card em "${state.currentDeckName}"`;
+                    ui.addCardForm.style.display = 'block';
+                    ui.addDeckForm.style.display = 'none';
+                    ui.newCardEn.value = '';
+                    ui.newCardPt.value = '';
+                } else {
+                    ui.modalTitle.textContent = 'Criar Novo Deck';
+                    ui.addCardForm.style.display = 'none';
+                    ui.addDeckForm.style.display = 'block';
+                    ui.newDeckName.value = '';
+                }
+            }
+
+            function closeModal() {
+                ui.modal.classList.add('opacity-0');
+                ui.modal.querySelector('.modal-content').classList.add('-translate-y-10');
+                setTimeout(() => ui.modal.classList.add('hidden'), 250);
+            }
+
+            document.getElementById('add-card-btn').addEventListener('click', () => {
+                if (state.currentDeckName) openModal('card');
+                else alert("Crie um deck primeiro!");
+            });
+            document.getElementById('new-deck-btn').addEventListener('click', () => openModal('deck'));
+            document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+            document.getElementById('modal-save-btn').addEventListener('click', () => {
+                if (modalMode === 'card') {
+                    const en = ui.newCardEn.value.trim();
+                    const pt = ui.newCardPt.value.trim();
+                    if (en && pt) {
+                        const newCard = { en, pt, status: 'new' };
+                        state.decks[state.currentDeckName].cards.push(newCard);
+                        state.currentCardIndex = state.decks[state.currentDeckName].cards.length - 1;
+                        render();
+                        saveData();
+                        closeModal();
+                    } else {
+                        alert('Por favor, preencha ambos os campos.');
+                    }
+                } else {
+                    const deckName = ui.newDeckName.value.trim();
+                    if (deckName && !state.decks[deckName]) {
+                        state.decks[deckName] = { name: deckName, score: 0, cards: [] };
+                        state.currentDeckName = deckName;
+                        render();
+                        saveData();
+                        closeModal();
+                    } else {
+                        alert('Por favor, insira um nome de deck válido e que não exista.');
+                    }
+                }
+            });
+            
+            // --- LÓGICA DE VOZ ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+            } else {
+                ui.micButton.disabled = true;
+                console.error("Speech Recognition not supported.");
+            }
+
+            document.getElementById('listen-button').addEventListener('click', () => {
+                const card = state.decks[state.currentDeckName]?.cards[state.currentCardIndex];
+                if (!card) return;
+                const textToSpeak = card.en;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            });
+
+            if (recognition) {
+                ui.micButton.addEventListener('click', () => {
+                    if (ui.micIcon.classList.contains('recording')) {
+                        recognition.stop();
+                        return;
+                    }
+                    const card = state.decks[state.currentDeckName]?.cards[state.currentCardIndex];
+                    if(card) recognition.start();
+                });
+
+                recognition.onstart = () => {
+                    ui.micIcon.classList.add('recording', 'fa-stop');
+                    ui.micIcon.classList.remove('fa-microphone');
+                    ui.feedbackText.textContent = 'Ouvindo...';
+                    ui.feedbackText.className = 'text-lg font-medium text-blue-500';
+                };
+
+                recognition.onend = () => {
+                    ui.micIcon.classList.remove('recording', 'fa-stop');
+                    ui.micIcon.classList.add('fa-microphone');
+                };
+
+                recognition.onresult = (event) => {
+                    const spokenText = event.results[0][0].transcript.toLowerCase().trim();
+                    const card = state.decks[state.currentDeckName].cards[state.currentCardIndex];
+                    const correctText = card.en.toLowerCase().replace(/[.,?]/g, '').trim();
+
+                    if (spokenText === correctText) {
+                        ui.feedbackText.textContent = 'Pronúncia Perfeita!';
+                        ui.feedbackText.className = 'text-lg font-medium text-green-500';
+                        
+                        const deck = state.decks[state.currentDeckName];
+                        if (card.status !== 'learned') {
+                            card.status = 'learned';
+                            deck.score += 1;
+                            updateCard();
+                            saveData();
+                        }
+                    } else {
+                        ui.feedbackText.textContent = `Quase lá! Você disse: "${spokenText}"`;
+                        ui.feedbackText.className = 'text-lg font-medium text-red-500';
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                    ui.feedbackText.textContent = `Erro: ${event.error}.`;
+                    ui.feedbackText.className = 'text-lg font-medium text-red-500';
+                };
+            }
+
+            // --- INICIALIZAÇÃO ---
+            loadData();
+        });
+    </script>
+</body>
+</html>
