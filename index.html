@@ -119,8 +119,10 @@
                 <button id="new-deck-btn" title="Novo Deck" class="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus"></i></button>
             </div>
             <div class="flex items-center justify-between mt-4">
-                <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Adicionar Card</button>
-                <button id="shuffle-btn" class="text-sm bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Embaralhar</button>
+                <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Adicionar</button>
+                <button id="edit-card-btn" class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Editar</button>
+                <button id="delete-card-btn" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Excluir</button>
+                <button id="shuffle-btn" class="text-sm bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Embaralhar</button>
                 <div class="text-right">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Pontuação</p>
                     <p id="score" class="font-bold text-lg text-blue-600 dark:text-blue-400">0</p>
@@ -227,6 +229,8 @@
             voiceSelector: document.getElementById('voice-selector'),
             voiceRate: document.getElementById('voice-rate'),
             addCardBtn: document.getElementById('add-card-btn'),
+            editCardBtn: document.getElementById('edit-card-btn'),
+            deleteCardBtn: document.getElementById('delete-card-btn'),
             newDeckBtn: document.getElementById('new-deck-btn'),
             shuffleButton: document.getElementById('shuffle-btn'),
             listenButton: document.getElementById('listen-button'),
@@ -241,6 +245,7 @@
             currentCardIndex: 0,
             isReviewMode: false,
             activeCardList: [],
+            editingCard: null, // To store the card being edited
             unsubscribe: null,
             voices: [],
             selectedVoiceURI: localStorage.getItem('selectedVoiceURI') || null,
@@ -249,16 +254,14 @@
         // --- AUTHENTICATION LOGIC ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // User is signed in
                 state.userId = user.uid;
                 ui.authScreen.classList.add('hidden');
                 ui.appContent.classList.remove('hidden');
                 loadUserData();
             } else {
-                // User is signed out
                 state.userId = null;
-                if(state.unsubscribe) state.unsubscribe(); // Stop listening to old user's data
-                state.decks = {}; // Clear data
+                if(state.unsubscribe) state.unsubscribe();
+                state.decks = {};
                 ui.authScreen.classList.remove('hidden');
                 ui.appContent.classList.add('hidden');
             }
@@ -270,7 +273,6 @@
                 ui.authError.textContent = '';
             } catch (error) {
                 ui.authError.textContent = "E-mail ou senha inválidos.";
-                console.error("Login Error:", error);
             }
         });
 
@@ -279,12 +281,7 @@
                 await createUserWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value);
                 ui.authError.textContent = '';
             } catch (error) {
-                if (error.code === 'auth/email-already-in-use') {
-                    ui.authError.textContent = "Este e-mail já está em uso.";
-                } else {
-                    ui.authError.textContent = "Erro ao registrar. Verifique os dados.";
-                }
-                console.error("Register Error:", error);
+                ui.authError.textContent = error.code === 'auth/email-already-in-use' ? "Este e-mail já está em uso." : "Erro ao registrar.";
             }
         });
 
@@ -295,13 +292,10 @@
                 ui.authError.textContent = '';
             } catch (error) {
                 ui.authError.textContent = "Erro ao fazer login com Google.";
-                console.error("Google Login Error:", error);
             }
         });
 
-        ui.logoutBtn.addEventListener('click', async () => {
-            await signOut(auth);
-        });
+        ui.logoutBtn.addEventListener('click', () => signOut(auth));
 
 
         // --- DATA & APP LOGIC ---
@@ -417,12 +411,6 @@
             initSwipe(cardWrapper, cardData.id);
         }
         
-        function showNextCard() {
-            if (state.activeCardList.length === 0) return;
-            state.currentCardIndex = (state.currentCardIndex + 1) % state.activeCardList.length;
-            renderCard();
-        }
-
         let startX = 0, currentX = 0, isDragging = false, cardElement, overlayElement;
         function initSwipe(element, cardId) {
             cardElement = element;
@@ -463,14 +451,13 @@
                 if (deltaX > threshold) {
                     cardElement.style.transform = `translateX(1000px) rotate(30deg)`;
                     await updateCardStatus(cardId, 'learned');
-                    setTimeout(showNextCard, 200);
                 } else if (deltaX < -threshold) {
                     cardElement.style.transform = `translateX(-1000px) rotate(-30deg)`;
                     await updateCardStatus(cardId, 'in_progress');
-                    setTimeout(showNextCard, 200);
                 } else {
                     cardElement.style.transform = 'translateX(0) rotate(0)';
                 }
+                // We don't call showNextCard here, as onSnapshot will re-render
             });
         }
 
@@ -508,33 +495,27 @@
             const recognition = new SpeechRecognition();
             recognition.lang = 'en-US';
             recognition.interimResults = false;
-
             ui.micButton.addEventListener('click', () => {
                 const card = state.activeCardList[state.currentCardIndex];
                 if (!card || ui.micIcon.classList.contains('recording')) {
-                    recognition.stop();
-                    return;
+                    recognition.stop(); return;
                 }
                 recognition.start();
             });
-
             recognition.onstart = () => {
                 ui.micIcon.classList.add('recording', 'fa-stop');
                 ui.micIcon.classList.remove('fa-microphone');
                 ui.feedbackText.textContent = 'Ouvindo...';
                 ui.feedbackText.className = 'text-lg font-medium text-blue-500';
             };
-
             recognition.onend = () => {
                 ui.micIcon.classList.remove('recording', 'fa-stop');
                 ui.micIcon.classList.add('fa-microphone');
             };
-
             recognition.onresult = async (event) => {
                 const spokenText = event.results[0][0].transcript.toLowerCase().trim();
                 const card = state.activeCardList[state.currentCardIndex];
                 const correctText = card.en.toLowerCase().replace(/[.,?]/g, '').trim();
-
                 if (spokenText === correctText) {
                     ui.feedbackText.textContent = 'Pronúncia Perfeita!';
                     ui.feedbackText.className = 'text-lg font-medium text-green-500';
@@ -544,15 +525,12 @@
                     ui.feedbackText.className = 'text-lg font-medium text-red-500';
                 }
             };
-
             recognition.onerror = (event) => {
-                console.error("Speech recognition error", event.error);
                 ui.feedbackText.textContent = `Erro: ${event.error}.`;
                 ui.feedbackText.className = 'text-lg font-medium text-red-500';
             };
         } else {
             ui.micButton.disabled = true;
-            console.error("Speech Recognition not supported in this browser.");
         }
 
         ui.deckSelector.addEventListener('change', (e) => {
@@ -577,49 +555,92 @@
             }
         });
         
-        let modalMode = 'card';
-        function openModal(mode) {
+        let modalMode = 'add-card';
+        function openModal(mode, cardToEdit = null) {
             modalMode = mode;
-            ui.modal.classList.remove('hidden');
-            setTimeout(() => ui.modal.classList.remove('opacity-0'), 10);
-            if (mode === 'card') {
-                ui.modalTitle.textContent = `Adicionar Card em "${state.currentDeckName}"`;
+            if (mode === 'edit-card') {
+                state.editingCard = cardToEdit;
+                ui.modalTitle.textContent = 'Editar Card';
+                ui.newCardEn.value = cardToEdit.en;
+                ui.newCardPt.value = cardToEdit.pt;
                 ui.addCardForm.style.display = 'block';
                 ui.addDeckForm.style.display = 'none';
-            } else {
+            } else if (mode === 'add-card') {
+                state.editingCard = null;
+                ui.modalTitle.textContent = `Adicionar Card em "${state.currentDeckName}"`;
+                ui.newCardEn.value = '';
+                ui.newCardPt.value = '';
+                ui.addCardForm.style.display = 'block';
+                ui.addDeckForm.style.display = 'none';
+            } else { // add-deck
+                state.editingCard = null;
                 ui.modalTitle.textContent = 'Criar Novo Deck';
                 ui.addCardForm.style.display = 'none';
                 ui.addDeckForm.style.display = 'block';
             }
+            ui.modal.classList.remove('hidden');
+            setTimeout(() => ui.modal.classList.remove('opacity-0'), 10);
         }
         function closeModal() {
             ui.modal.classList.add('opacity-0');
             setTimeout(() => ui.modal.classList.add('hidden'), 250);
         }
-        ui.addCardBtn.addEventListener('click', () => openModal('card'));
-        ui.newDeckBtn.addEventListener('click', () => openModal('deck'));
+        
+        ui.addCardBtn.addEventListener('click', () => openModal('add-card'));
+        ui.editCardBtn.addEventListener('click', () => {
+            const card = state.activeCardList[state.currentCardIndex];
+            if (card) openModal('edit-card', card);
+        });
+        ui.deleteCardBtn.addEventListener('click', async () => {
+            const cardToDelete = state.activeCardList[state.currentCardIndex];
+            if (!cardToDelete) return;
+
+            // Simple confirmation for now. A custom modal would be better.
+            if (!confirm(`Tem certeza que deseja excluir o card "${cardToDelete.en}"?`)) {
+                return;
+            }
+
+            const collectionPath = `decks/${state.userId}/userDecks`;
+            const deck = state.decks[state.currentDeckName];
+            deck.cards = deck.cards.filter(c => c.id !== cardToDelete.id);
+            
+            const deckRef = doc(db, collectionPath, state.currentDeckName);
+            await updateDoc(deckRef, { cards: deck.cards });
+            // onSnapshot will handle the re-render
+        });
+
+        ui.newDeckBtn.addEventListener('click', () => openModal('add-deck'));
         ui.modalCancelBtn.addEventListener('click', closeModal);
         ui.modalSaveBtn.addEventListener('click', async () => {
             const collectionPath = `decks/${state.userId}/userDecks`;
-            if (modalMode === 'card') {
-                const en = ui.newCardEn.value.trim();
-                const pt = ui.newCardPt.value.trim();
+            const en = ui.newCardEn.value.trim();
+            const pt = ui.newCardPt.value.trim();
+            const deckName = ui.newDeckName.value.trim();
+
+            if (modalMode === 'add-card') {
                 if (en && pt) {
                     const newCard = { id: crypto.randomUUID(), en, pt, status: 'new' };
                     const deckRef = doc(db, collectionPath, state.currentDeckName);
                     await updateDoc(deckRef, { cards: arrayUnion(newCard) });
-                    closeModal();
                 }
-            } else {
-                const deckName = ui.newDeckName.value.trim();
+            } else if (modalMode === 'edit-card') {
+                if (en && pt) {
+                    const deck = state.decks[state.currentDeckName];
+                    const cardInDeck = deck.cards.find(c => c.id === state.editingCard.id);
+                    cardInDeck.en = en;
+                    cardInDeck.pt = pt;
+                    const deckRef = doc(db, collectionPath, state.currentDeckName);
+                    await updateDoc(deckRef, { cards: deck.cards });
+                }
+            } else if (modalMode === 'add-deck') {
                 if (deckName && !state.decks[deckName]) {
                     const newDeck = { name: deckName, score: 0, cards: [] };
                     const deckRef = doc(db, collectionPath, deckName);
                     await setDoc(deckRef, newDeck);
                     state.currentDeckName = deckName;
-                    closeModal();
                 }
             }
+            closeModal();
         });
     </script>
 </body>
