@@ -122,11 +122,9 @@
                 <button id="new-deck-btn" title="Novo Deck" class="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus"></i></button>
             </div>
             <div class="flex items-center justify-between mt-4 flex-wrap gap-2">
-                <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Adicionar</button>
-                <button id="edit-card-btn" class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Editar</button>
-                <button id="delete-card-btn" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Excluir</button>
+                <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Adicionar Card</button>
                 <button id="shuffle-btn" class="text-sm bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Embaralhar</button>
-                <div class="text-right">
+                <div class="text-right flex-grow">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Pontuação</p>
                     <p id="score" class="font-bold text-lg text-blue-600 dark:text-blue-400">0</p>
                 </div>
@@ -246,8 +244,6 @@
             voiceSelector: document.getElementById('voice-selector'),
             voiceRate: document.getElementById('voice-rate'),
             addCardBtn: document.getElementById('add-card-btn'),
-            editCardBtn: document.getElementById('edit-card-btn'),
-            deleteCardBtn: document.getElementById('delete-card-btn'),
             newDeckBtn: document.getElementById('new-deck-btn'),
             shuffleButton: document.getElementById('shuffle-btn'),
             listenButton: document.getElementById('listen-button'),
@@ -460,22 +456,27 @@
             const toReinforce = deck.cards.filter(c => c.status !== 'learned');
             const learned = deck.cards.filter(c => c.status === 'learned');
 
-            let html = '';
-            if (toReinforce.length > 0) {
-                html += `<h3 class="text-lg font-semibold mb-2 text-yellow-500">Precisa de Reforço</h3><ul class="space-y-2 mb-6">`;
-                toReinforce.forEach(card => {
-                    html += `<li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex justify-between"><span><strong>${card.en}</strong></span> <span>${card.pt}</span></li>`;
+            const createListHTML = (title, cards, titleColor) => {
+                if (cards.length === 0) return '';
+                let listHtml = `<h3 class="text-lg font-semibold mb-2 ${titleColor}">${title}</h3><ul class="space-y-2 mb-6">`;
+                cards.forEach(card => {
+                    listHtml += `
+                        <li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-between">
+                            <div class="flex-1">
+                                <strong class="dark:text-white">${card.en}</strong>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">${card.pt}</p>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button class="edit-word-btn text-blue-500 hover:text-blue-700" data-card-id="${card.id}"><i class="fas fa-edit"></i></button>
+                                <button class="delete-word-btn text-red-500 hover:text-red-700" data-card-id="${card.id}"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </li>`;
                 });
-                html += `</ul>`;
-            }
-            if (learned.length > 0) {
-                html += `<h3 class="text-lg font-semibold mb-2 text-green-500">Aprendidas</h3><ul class="space-y-2">`;
-                learned.forEach(card => {
-                    html += `<li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex justify-between"><span><strong>${card.en}</strong></span> <span>${card.pt}</span></li>`;
-                });
-                html += `</ul>`;
-            }
-            ui.wordListScreen.innerHTML = html;
+                listHtml += `</ul>`;
+                return listHtml;
+            };
+
+            ui.wordListScreen.innerHTML = createListHTML('Precisa de Reforço', toReinforce, 'text-yellow-500') + createListHTML('Aprendidas', learned, 'text-green-500');
         }
 
         let startX = 0, currentX = 0, isDragging = false, cardElement, overlayElement;
@@ -528,11 +529,7 @@
                 }
 
                 if (statusUpdate) {
-                    // Delay data update to allow animation to finish
-                    setTimeout(async () => {
-                        await updateCardStatus(cardId, statusUpdate);
-                        // onSnapshot will trigger the re-render of the next card
-                    }, 300);
+                    updateCardStatus(cardId, statusUpdate);
                 }
             });
         }
@@ -672,20 +669,28 @@
         }
         
         ui.addCardBtn.addEventListener('click', () => openModal('add-card'));
-        ui.editCardBtn.addEventListener('click', () => {
-            const card = state.activeCardList[state.currentCardIndex];
-            if (card) openModal('edit-card', card);
-        });
-        ui.deleteCardBtn.addEventListener('click', async () => {
-            const cardToDelete = state.activeCardList[state.currentCardIndex];
-            if (!cardToDelete) return;
-            if (!confirm(`Tem certeza que deseja excluir o card "${cardToDelete.en}"?`)) return;
-
+        
+        ui.wordListScreen.addEventListener('click', async (e) => {
+            const editBtn = e.target.closest('.edit-word-btn');
+            const deleteBtn = e.target.closest('.delete-word-btn');
             const collectionPath = `decks/${state.userId}/userDecks`;
             const deck = state.decks[state.currentDeckName];
-            deck.cards = deck.cards.filter(c => c.id !== cardToDelete.id);
-            const deckRef = doc(db, collectionPath, state.currentDeckName);
-            await updateDoc(deckRef, { cards: deck.cards });
+
+            if (editBtn) {
+                const cardId = editBtn.dataset.cardId;
+                const cardToEdit = deck.cards.find(c => c.id === cardId);
+                if (cardToEdit) openModal('edit-card', cardToEdit);
+            }
+
+            if (deleteBtn) {
+                const cardId = deleteBtn.dataset.cardId;
+                const cardToDelete = deck.cards.find(c => c.id === cardId);
+                if (cardToDelete && confirm(`Tem certeza que deseja excluir o card "${cardToDelete.en}"?`)) {
+                    deck.cards = deck.cards.filter(c => c.id !== cardId);
+                    const deckRef = doc(db, collectionPath, state.currentDeckName);
+                    await updateDoc(deckRef, { cards: deck.cards });
+                }
+            }
         });
 
         ui.newDeckBtn.addEventListener('click', () => openModal('add-deck'));
