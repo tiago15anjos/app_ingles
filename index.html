@@ -423,6 +423,59 @@
             speechSynthesis.speak(utterance);
         });
         
+        // --- LÓGICA DE RECONHECIMENTO DE VOZ (MICROFONE) ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            ui.micButton.addEventListener('click', () => {
+                const card = state.activeCardList[state.currentCardIndex];
+                if (!card || ui.micIcon.classList.contains('recording')) {
+                    recognition.stop();
+                    return;
+                }
+                recognition.start();
+            });
+
+            recognition.onstart = () => {
+                ui.micIcon.classList.add('recording', 'fa-stop');
+                ui.micIcon.classList.remove('fa-microphone');
+                ui.feedbackText.textContent = 'Ouvindo...';
+                ui.feedbackText.className = 'text-lg font-medium text-blue-500';
+            };
+
+            recognition.onend = () => {
+                ui.micIcon.classList.remove('recording', 'fa-stop');
+                ui.micIcon.classList.add('fa-microphone');
+            };
+
+            recognition.onresult = async (event) => {
+                const spokenText = event.results[0][0].transcript.toLowerCase().trim();
+                const card = state.activeCardList[state.currentCardIndex];
+                const correctText = card.en.toLowerCase().replace(/[.,?]/g, '').trim();
+
+                if (spokenText === correctText) {
+                    ui.feedbackText.textContent = 'Pronúncia Perfeita!';
+                    ui.feedbackText.className = 'text-lg font-medium text-green-500';
+                    await updateCardStatus(card.id, 'learned');
+                } else {
+                    ui.feedbackText.textContent = `Quase lá! Você disse: "${spokenText}"`;
+                    ui.feedbackText.className = 'text-lg font-medium text-red-500';
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                ui.feedbackText.textContent = `Erro: ${event.error}.`;
+                ui.feedbackText.className = 'text-lg font-medium text-red-500';
+            };
+        } else {
+            ui.micButton.disabled = true;
+            console.error("Speech Recognition not supported in this browser.");
+        }
+
         ui.deckSelector.addEventListener('change', (e) => {
             state.currentDeckName = e.target.value;
             state.currentCardIndex = 0;
