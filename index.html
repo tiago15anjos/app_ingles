@@ -76,12 +76,42 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <div id="loading" class="text-center">
-        <p class="text-lg">Conectando...</p>
+    <!-- TELA DE LOGIN -->
+    <div id="auth-screen" class="w-full max-w-sm mx-auto">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+            <h1 class="text-3xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">Bem-vindo(a)!</h1>
+            <p class="text-center text-gray-600 dark:text-gray-400 mb-8">Faça login para continuar</p>
+            
+            <div class="space-y-4">
+                <input type="email" id="email-input" placeholder="E-mail" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                <input type="password" id="password-input" placeholder="Senha" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+            </div>
+
+            <div class="flex space-x-2 mt-6">
+                <button id="login-btn" class="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">Entrar</button>
+                <button id="register-btn" class="w-full py-3 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-semibold hover:bg-gray-400">Registrar</button>
+            </div>
+
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                <span class="flex-shrink mx-4 text-gray-400">OU</span>
+                <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+
+            <button id="google-login-btn" class="w-full py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-gray-800 dark:text-white flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600">
+                <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google logo" class="w-6 h-6 mr-2">
+                Entrar com Google
+            </button>
+            <p id="auth-error" class="text-red-500 text-center mt-4 h-4"></p>
+        </div>
     </div>
 
+    <!-- CONTEÚDO PRINCIPAL DO APP -->
     <div id="app-content" class="w-full max-w-md mx-auto hidden">
-        <h1 class="text-3xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">English Flashcards</h1>
+        <div class="flex justify-between items-center mb-4">
+             <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">English Flashcards</h1>
+             <button id="logout-btn" title="Sair" class="p-2 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"><i class="fas fa-sign-out-alt text-xl"></i></button>
+        </div>
         
         <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
             <div class="flex items-center justify-between">
@@ -151,7 +181,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, writeBatch, getDocs, updateDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Suas chaves de conexão do Firebase.
@@ -170,8 +200,15 @@
         const auth = getAuth(app);
 
         const ui = {
-            loading: document.getElementById('loading'),
+            authScreen: document.getElementById('auth-screen'),
             appContent: document.getElementById('app-content'),
+            emailInput: document.getElementById('email-input'),
+            passwordInput: document.getElementById('password-input'),
+            loginBtn: document.getElementById('login-btn'),
+            registerBtn: document.getElementById('register-btn'),
+            googleLoginBtn: document.getElementById('google-login-btn'),
+            logoutBtn: document.getElementById('logout-btn'),
+            authError: document.getElementById('auth-error'),
             deckSelector: document.getElementById('deck-selector'),
             score: document.getElementById('score'),
             flashcardContainer: document.getElementById('flashcard-container'),
@@ -209,20 +246,65 @@
             selectedVoiceURI: localStorage.getItem('selectedVoiceURI') || null,
         };
 
-        onAuthStateChanged(auth, async (user) => {
+        // --- AUTHENTICATION LOGIC ---
+        onAuthStateChanged(auth, (user) => {
             if (user) {
+                // User is signed in
                 state.userId = user.uid;
+                ui.authScreen.classList.add('hidden');
+                ui.appContent.classList.remove('hidden');
                 loadUserData();
             } else {
-                try {
-                    await signInAnonymously(auth);
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                    ui.loading.textContent = "Erro de autenticação.";
-                }
+                // User is signed out
+                state.userId = null;
+                if(state.unsubscribe) state.unsubscribe(); // Stop listening to old user's data
+                state.decks = {}; // Clear data
+                ui.authScreen.classList.remove('hidden');
+                ui.appContent.classList.add('hidden');
             }
         });
 
+        ui.loginBtn.addEventListener('click', async () => {
+            try {
+                await signInWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value);
+                ui.authError.textContent = '';
+            } catch (error) {
+                ui.authError.textContent = "E-mail ou senha inválidos.";
+                console.error("Login Error:", error);
+            }
+        });
+
+        ui.registerBtn.addEventListener('click', async () => {
+             try {
+                await createUserWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value);
+                ui.authError.textContent = '';
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    ui.authError.textContent = "Este e-mail já está em uso.";
+                } else {
+                    ui.authError.textContent = "Erro ao registrar. Verifique os dados.";
+                }
+                console.error("Register Error:", error);
+            }
+        });
+
+        ui.googleLoginBtn.addEventListener('click', async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                ui.authError.textContent = '';
+            } catch (error) {
+                ui.authError.textContent = "Erro ao fazer login com Google.";
+                console.error("Google Login Error:", error);
+            }
+        });
+
+        ui.logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+        });
+
+
+        // --- DATA & APP LOGIC ---
         async function loadUserData() {
             const collectionPath = `decks/${state.userId}/userDecks`;
             const collectionRef = collection(db, collectionPath);
@@ -236,8 +318,6 @@
                 if (!state.currentDeckName || !state.decks[state.currentDeckName]) {
                     state.currentDeckName = Object.keys(state.decks)[0];
                 }
-                ui.loading.classList.add('hidden');
-                ui.appContent.classList.remove('hidden');
                 render();
             });
         }
@@ -423,7 +503,6 @@
             speechSynthesis.speak(utterance);
         });
         
-        // --- LÓGICA DE RECONHECIMENTO DE VOZ (MICROFONE) ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
