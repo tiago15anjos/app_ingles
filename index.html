@@ -10,11 +10,11 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            overflow: hidden; /* Previne scroll da página durante o swipe do card */
+            overflow: hidden;
             overscroll-behavior-x: none;
         }
         .card-wrapper {
-            touch-action: none; /* Essencial para o PointerEvents funcionar bem em mobile */
+            touch-action: none;
             user-select: none;
         }
         .card {
@@ -42,8 +42,6 @@
         }
         .modal { transition: opacity 0.25s ease; }
         .modal-content { transition: transform 0.25s ease; }
-
-        /* Estilos para o swipe */
         #swipe-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -57,10 +55,8 @@
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
         }
-        #swipe-overlay.left { background-color: rgba(234, 179, 8, 0.7); } /* Amarelo para reforçar */
-        #swipe-overlay.right { background-color: rgba(52, 211, 153, 0.7); } /* Verde para aprendido */
-        
-        /* Estilos para o Toggle Switch */
+        #swipe-overlay.left { background-color: rgba(234, 179, 8, 0.7); }
+        #swipe-overlay.right { background-color: rgba(52, 211, 153, 0.7); }
         .toggle-bg:after {
             content: '';
             position: absolute;
@@ -81,14 +77,12 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <div id="loading" class="text-center">
-        <p class="text-lg">Conectando ao banco de dados...</p>
-        <p class="text-sm text-gray-500 mt-2">(Isso pode não funcionar em arquivos locais, mas funcionará online no GitHub Pages)</p>
+        <p class="text-lg">Conectando...</p>
     </div>
 
     <div id="app-content" class="w-full max-w-md mx-auto hidden">
         <h1 class="text-3xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">English Flashcards</h1>
         
-        <!-- Controles do Deck -->
         <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
             <div class="flex items-center justify-between">
                 <select id="deck-selector" class="w-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2"></select>
@@ -104,7 +98,6 @@
             </div>
         </div>
 
-        <!-- Modo de Treino -->
         <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
             <label for="review-mode-toggle" class="flex items-center justify-between cursor-pointer">
                 <span class="font-semibold text-gray-700 dark:text-gray-300">Treinar apenas o que precisa de reforço</span>
@@ -115,17 +108,14 @@
             </label>
         </div>
 
-        <!-- Flashcard com Swipe -->
         <div id="flashcard-container" class="relative perspective-1000 min-h-[16rem]">
             <div class="absolute inset-0 flex items-center justify-center text-gray-400">
                 <i class="fas fa-arrow-left mr-2"></i><span>Reforçar</span>
                 <span class="mx-4">|</span>
                 <span>Aprendido</span><i class="fas fa-arrow-right ml-2"></i>
             </div>
-            <!-- O card será inserido aqui pelo JS -->
         </div>
 
-        <!-- Pronúncia e Voz -->
         <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
             <h3 class="text-lg font-semibold mb-2 text-center">Prática de Pronúncia</h3>
             <div class="flex items-center justify-center space-x-4">
@@ -144,7 +134,6 @@
         <div class="text-center mt-4"><p id="card-counter" class="text-sm text-gray-500 dark:text-gray-400"></p></div>
     </div>
 
-    <!-- Modal -->
     <div id="modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
         <div class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm transform -translate-y-10">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-center"></h2>
@@ -162,17 +151,24 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, writeBatch, getDocs, updateDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        // Suas chaves de conexão do Firebase.
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrZaBIRNiyjOIty5FvcmvEHk4iXLM6VRc",
+            authDomain: "app-ingles-888b1.firebaseapp.com",
+            projectId: "app-ingles-888b1",
+            storageBucket: "app-ingles-888b1.appspot.com",
+            messagingSenderId: "46270792035",
+            appId: "1:46270792035:web:3db074a94619bfee21d356",
+            measurementId: "G-HSZL22VE52"
+        };
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- STATE & UI ---
         const ui = {
             loading: document.getElementById('loading'),
             appContent: document.getElementById('app-content'),
@@ -193,7 +189,6 @@
             reviewModeToggle: document.getElementById('review-mode-toggle'),
             voiceSelector: document.getElementById('voice-selector'),
             voiceRate: document.getElementById('voice-rate'),
-            // CORREÇÃO: Adicionando os botões que faltavam ao objeto UI
             addCardBtn: document.getElementById('add-card-btn'),
             newDeckBtn: document.getElementById('new-deck-btn'),
             shuffleButton: document.getElementById('shuffle-btn'),
@@ -214,16 +209,13 @@
             selectedVoiceURI: localStorage.getItem('selectedVoiceURI') || null,
         };
 
-        // --- FIREBASE AUTH & DATA ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 state.userId = user.uid;
                 loadUserData();
             } else {
                 try {
-                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (token) await signInWithCustomToken(auth, token);
-                    else await signInAnonymously(auth);
+                    await signInAnonymously(auth);
                 } catch (error) {
                     console.error("Auth Error:", error);
                     ui.loading.textContent = "Erro de autenticação.";
@@ -232,12 +224,14 @@
         });
 
         async function loadUserData() {
-            const collectionRef = collection(db, `artifacts/${appId}/users/${state.userId}/decks`);
+            const collectionPath = `decks/${state.userId}/userDecks`;
+            const collectionRef = collection(db, collectionPath);
             const initialCheck = await getDocs(collectionRef);
-            if (initialCheck.empty) await createDefaultDecks();
+            if (initialCheck.empty) await createDefaultDecks(collectionPath);
 
             if (state.unsubscribe) state.unsubscribe();
             state.unsubscribe = onSnapshot(collectionRef, (snapshot) => {
+                state.decks = {};
                 snapshot.docs.forEach(doc => { state.decks[doc.id] = doc.data(); });
                 if (!state.currentDeckName || !state.decks[state.currentDeckName]) {
                     state.currentDeckName = Object.keys(state.decks)[0];
@@ -248,20 +242,21 @@
             });
         }
 
-        async function createDefaultDecks() {
+        async function createDefaultDecks(collectionPath) {
             const batch = writeBatch(db);
             const defaultDecks = {
                 "Verbs": { name: "Verbs", score: 0, cards: [{id: crypto.randomUUID(), en: "to study", pt: "estudar", status: "new"}] },
                 "Vocabulary": { name: "Vocabulary", score: 0, cards: [{id: crypto.randomUUID(), en: "challenge", pt: "desafio", status: "new"}] },
             };
             for (const deckName in defaultDecks) {
-                const deckRef = doc(db, `artifacts/${appId}/users/${state.userId}/decks`, deckName);
+                const deckRef = doc(db, collectionPath, deckName);
                 batch.set(deckRef, defaultDecks[deckName]);
             }
             await batch.commit();
         }
 
         async function updateCardStatus(cardId, newStatus) {
+            const collectionPath = `decks/${state.userId}/userDecks`;
             const deck = state.decks[state.currentDeckName];
             const card = deck.cards.find(c => c.id === cardId);
             if (!card || card.status === newStatus) return;
@@ -272,11 +267,10 @@
             if (newStatus === 'learned' && oldStatus !== 'learned') deck.score++;
             else if (oldStatus === 'learned' && newStatus !== 'learned') deck.score--;
             
-            const deckRef = doc(db, `artifacts/${appId}/users/${state.userId}/decks`, state.currentDeckName);
+            const deckRef = doc(db, collectionPath, state.currentDeckName);
             await updateDoc(deckRef, { cards: deck.cards, score: deck.score });
         }
 
-        // --- RENDER & UI LOGIC ---
         function render() {
             renderDeckSelector();
             updateActiveCardList();
@@ -312,19 +306,15 @@
 
         function renderCard() {
             ui.flashcardContainer.querySelector('.card-wrapper')?.remove();
-            
             const deck = state.decks[state.currentDeckName];
             ui.score.textContent = deck ? deck.score : 0;
-
             if (state.activeCardList.length === 0) {
                 ui.flashcardContainer.innerHTML = `<div class="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">${state.isReviewMode ? 'Nenhum card para reforçar!' : 'Adicione um card para começar!'}</div>`;
                 ui.cardCounter.textContent = '0 de 0';
                 return;
             }
-
             const cardData = state.activeCardList[state.currentCardIndex];
             if (!cardData) return;
-
             const cardWrapper = document.createElement('div');
             cardWrapper.className = 'card-wrapper absolute inset-0 cursor-grab active:cursor-grabbing';
             cardWrapper.innerHTML = `
@@ -337,17 +327,13 @@
                         <div><p class="text-blue-200 mb-2">Em Inglês</p><h2 class="text-4xl font-bold">${cardData.en}</h2></div>
                     </div>
                 </div>`;
-            
             ui.flashcardContainer.appendChild(cardWrapper);
             ui.cardCounter.textContent = `Card ${state.currentCardIndex + 1} de ${state.activeCardList.length}`;
-            
             cardWrapper.querySelector('#flashcard').addEventListener('click', (e) => {
-                // Previne virar o card durante o swipe
                 if (Math.abs(startX - e.clientX) < 10) {
                     e.currentTarget.classList.toggle('is-flipped');
                 }
             });
-            
             initSwipe(cardWrapper, cardData.id);
         }
         
@@ -357,32 +343,23 @@
             renderCard();
         }
 
-        // --- SWIPE LOGIC ---
-        let startX = 0;
-        let currentX = 0;
-        let isDragging = false;
-        let cardElement, overlayElement;
-
+        let startX = 0, currentX = 0, isDragging = false, cardElement, overlayElement;
         function initSwipe(element, cardId) {
             cardElement = element;
             overlayElement = element.querySelector('#swipe-overlay');
-            
             cardElement.addEventListener('pointerdown', (e) => {
                 isDragging = true;
                 startX = e.clientX;
                 cardElement.style.transition = 'none';
                 overlayElement.style.transition = 'opacity 0.2s ease-in-out';
             });
-
             window.addEventListener('pointermove', (e) => {
                 if (!isDragging) return;
                 currentX = e.clientX;
                 const deltaX = currentX - startX;
                 const rotation = deltaX / 20;
-
                 cardElement.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
-                
-                overlayElement.className = 'absolute inset-0'; // Reset
+                overlayElement.className = 'absolute inset-0';
                 if (deltaX > 20) {
                     overlayElement.classList.add('right');
                     overlayElement.textContent = 'Aprendido';
@@ -395,32 +372,28 @@
                     overlayElement.style.opacity = 0;
                 }
             });
-
             window.addEventListener('pointerup', async (e) => {
                 if (!isDragging) return;
                 isDragging = false;
                 const deltaX = e.clientX - startX;
                 const threshold = window.innerWidth / 4;
-
                 cardElement.style.transition = 'transform 0.4s ease';
                 overlayElement.style.transition = 'opacity 0.4s ease';
                 overlayElement.style.opacity = 0;
-
-                if (deltaX > threshold) { // Swipe right
+                if (deltaX > threshold) {
                     cardElement.style.transform = `translateX(1000px) rotate(30deg)`;
                     await updateCardStatus(cardId, 'learned');
                     setTimeout(showNextCard, 200);
-                } else if (deltaX < -threshold) { // Swipe left
+                } else if (deltaX < -threshold) {
                     cardElement.style.transform = `translateX(-1000px) rotate(-30deg)`;
                     await updateCardStatus(cardId, 'in_progress');
                     setTimeout(showNextCard, 200);
-                } else { // Return to center
+                } else {
                     cardElement.style.transform = 'translateX(0) rotate(0)';
                 }
             });
         }
 
-        // --- SPEECH & VOICE LOGIC ---
         function populateVoiceList() {
             state.voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en-'));
             ui.voiceSelector.innerHTML = '';
@@ -428,9 +401,7 @@
                 const option = document.createElement('option');
                 option.textContent = `${voice.name} (${voice.lang})`;
                 option.value = voice.voiceURI;
-                if (voice.voiceURI === state.selectedVoiceURI) {
-                    option.selected = true;
-                }
+                if (voice.voiceURI === state.selectedVoiceURI) option.selected = true;
                 ui.voiceSelector.appendChild(option);
             });
         }
@@ -438,12 +409,10 @@
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
-
         ui.voiceSelector.addEventListener('change', (e) => {
             state.selectedVoiceURI = e.target.value;
             localStorage.setItem('selectedVoiceURI', state.selectedVoiceURI);
         });
-
         ui.listenButton.addEventListener('click', () => {
             const card = state.activeCardList[state.currentCardIndex];
             if (!card) return;
@@ -454,20 +423,17 @@
             speechSynthesis.speak(utterance);
         });
         
-        // --- EVENT LISTENERS ---
         ui.deckSelector.addEventListener('change', (e) => {
             state.currentDeckName = e.target.value;
             state.currentCardIndex = 0;
             render();
         });
-        
         ui.reviewModeToggle.addEventListener('change', (e) => {
             state.isReviewMode = e.target.checked;
             state.currentCardIndex = 0;
             updateActiveCardList();
             renderCard();
         });
-
         ui.shuffleButton.addEventListener('click', () => {
             if (state.activeCardList.length > 1) {
                 for (let i = state.activeCardList.length - 1; i > 0; i--) {
@@ -479,7 +445,6 @@
             }
         });
         
-        // --- MODAL LOGIC ---
         let modalMode = 'card';
         function openModal(mode) {
             modalMode = mode;
@@ -503,12 +468,13 @@
         ui.newDeckBtn.addEventListener('click', () => openModal('deck'));
         ui.modalCancelBtn.addEventListener('click', closeModal);
         ui.modalSaveBtn.addEventListener('click', async () => {
+            const collectionPath = `decks/${state.userId}/userDecks`;
             if (modalMode === 'card') {
                 const en = ui.newCardEn.value.trim();
                 const pt = ui.newCardPt.value.trim();
                 if (en && pt) {
                     const newCard = { id: crypto.randomUUID(), en, pt, status: 'new' };
-                    const deckRef = doc(db, `artifacts/${appId}/users/${state.userId}/decks`, state.currentDeckName);
+                    const deckRef = doc(db, collectionPath, state.currentDeckName);
                     await updateDoc(deckRef, { cards: arrayUnion(newCard) });
                     closeModal();
                 }
@@ -516,15 +482,13 @@
                 const deckName = ui.newDeckName.value.trim();
                 if (deckName && !state.decks[deckName]) {
                     const newDeck = { name: deckName, score: 0, cards: [] };
-                    const deckRef = doc(db, `artifacts/${appId}/users/${state.userId}/decks`, deckName);
+                    const deckRef = doc(db, collectionPath, deckName);
                     await setDoc(deckRef, newDeck);
                     state.currentDeckName = deckName;
                     closeModal();
                 }
             }
         });
-
-        // O resto da lógica (pronúncia, etc.) pode ser adicionado aqui
     </script>
 </body>
 </html>
