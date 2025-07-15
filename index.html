@@ -10,12 +10,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            overflow: hidden;
-            overscroll-behavior-x: none;
-        }
-        .card-wrapper {
-            touch-action: none;
-            user-select: none;
+            /* CORREÇÃO: Removido o 'overflow: hidden' para permitir a rolagem da página */
         }
         .card {
             transform-style: preserve-3d;
@@ -42,21 +37,6 @@
         }
         .modal { transition: opacity 0.25s ease; }
         .modal-content { transition: transform 0.25s ease; }
-        #swipe-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-            color: white;
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-        }
-        #swipe-overlay.left { background-color: rgba(234, 179, 8, 0.7); }
-        #swipe-overlay.right { background-color: rgba(52, 211, 153, 0.7); }
         .toggle-bg:after {
             content: '';
             position: absolute;
@@ -150,11 +130,17 @@
             </div>
 
             <div id="flashcard-container" class="relative perspective-1000 min-h-[16rem]">
-                <div class="absolute inset-0 flex items-center justify-center text-gray-400">
-                    <i class="fas fa-arrow-left mr-2"></i><span>Reforçar</span>
-                    <span class="mx-4">|</span>
-                    <span>Aprendido</span><i class="fas fa-arrow-right ml-2"></i>
-                </div>
+                <!-- Card será renderizado aqui -->
+            </div>
+            
+            <!-- MUDANÇA: Botões substituem o swipe -->
+            <div id="study-actions" class="mt-4 grid grid-cols-2 gap-4">
+                 <button id="reinforce-btn" class="py-3 px-4 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 transition-transform transform hover:scale-105">
+                    <i class="fas fa-brain mr-2"></i>Reforçar
+                </button>
+                <button id="learned-btn" class="py-3 px-4 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-transform transform hover:scale-105">
+                    <i class="fas fa-check mr-2"></i>Aprendido
+                </button>
             </div>
 
             <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
@@ -176,7 +162,7 @@
         </div>
 
         <!-- TELA DA LISTA DE PALAVRAS -->
-        <div id="word-list-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg max-h-[60vh] overflow-y-auto">
+        <div id="word-list-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg max-h-[70vh] overflow-y-auto">
             <!-- Conteúdo da lista será gerado pelo JS -->
         </div>
     </div>
@@ -253,6 +239,9 @@
             viewListBtn: document.getElementById('view-list-btn'),
             studyScreen: document.getElementById('study-screen'),
             wordListScreen: document.getElementById('word-list-screen'),
+            reinforceBtn: document.getElementById('reinforce-btn'),
+            learnedBtn: document.getElementById('learned-btn'),
+            studyActions: document.getElementById('study-actions'),
         };
 
         let state = {
@@ -414,21 +403,25 @@
         }
 
         function renderCard() {
-            ui.flashcardContainer.querySelector('.card-wrapper')?.remove();
+            ui.flashcardContainer.innerHTML = ''; // Clear previous card
             const deck = state.decks[state.currentDeckName];
             ui.score.textContent = deck ? deck.score : 0;
-            if (state.activeCardList.length === 0) {
+
+            const hasCards = state.activeCardList.length > 0;
+            ui.studyActions.style.display = hasCards ? 'grid' : 'none';
+
+            if (!hasCards) {
                 ui.flashcardContainer.innerHTML = `<div class="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">${state.isReviewMode ? 'Nenhum card para reforçar!' : 'Adicione um card para começar!'}</div>`;
                 ui.cardCounter.textContent = '0 de 0';
                 return;
             }
             const cardData = state.activeCardList[state.currentCardIndex];
             if (!cardData) return;
+
             const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'card-wrapper absolute inset-0 cursor-grab active:cursor-grabbing';
+            cardWrapper.className = 'card-wrapper w-full h-full cursor-pointer';
             cardWrapper.innerHTML = `
                 <div id="flashcard" class="card w-full h-full">
-                    <div id="swipe-overlay"></div>
                     <div class="card-face card-face-front absolute w-full h-full flex items-center justify-center bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 text-center">
                         <div><p class="text-gray-500 dark:text-gray-400 mb-2">Tradução</p><h2 class="text-3xl font-semibold">${cardData.pt}</h2></div>
                     </div>
@@ -438,12 +431,20 @@
                 </div>`;
             ui.flashcardContainer.appendChild(cardWrapper);
             ui.cardCounter.textContent = `Card ${state.currentCardIndex + 1} de ${state.activeCardList.length}`;
+            
             cardWrapper.querySelector('#flashcard').addEventListener('click', (e) => {
-                if (Math.abs(startX - e.clientX) < 10) {
-                    e.currentTarget.classList.toggle('is-flipped');
-                }
+                e.currentTarget.classList.toggle('is-flipped');
             });
-            initSwipe(cardWrapper, cardData.id);
+        }
+
+        function showNextCard() {
+            // This function is now simpler, just increments the index and re-renders.
+            if (state.activeCardList.length > 0) {
+                state.currentCardIndex = (state.currentCardIndex + 1) % state.activeCardList.length;
+            } else {
+                state.currentCardIndex = 0;
+            }
+            renderCard();
         }
         
         function renderWordList() {
@@ -477,72 +478,6 @@
             };
 
             ui.wordListScreen.innerHTML = createListHTML('Precisa de Reforço', toReinforce, 'text-yellow-500') + createListHTML('Aprendidas', learned, 'text-green-500');
-        }
-
-        let startX = 0;
-        function initSwipe(element, cardId) {
-            const cardElement = element;
-            const overlayElement = element.querySelector('#swipe-overlay');
-            let isDragging = false;
-            
-            const onPointerDown = (e) => {
-                isDragging = true;
-                startX = e.clientX;
-                cardElement.style.transition = 'none';
-                overlayElement.style.transition = 'opacity 0.2s ease-in-out';
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('pointerup', onPointerUp);
-            };
-
-            const onPointerMove = (e) => {
-                if (!isDragging) return;
-                const currentX = e.clientX;
-                const deltaX = currentX - startX;
-                const rotation = deltaX / 20;
-                cardElement.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
-                overlayElement.className = 'absolute inset-0';
-                if (deltaX > 20) {
-                    overlayElement.classList.add('right');
-                    overlayElement.textContent = 'Aprendido';
-                    overlayElement.style.opacity = Math.min(Math.abs(deltaX) / 100, 1);
-                } else if (deltaX < -20) {
-                    overlayElement.classList.add('left');
-                    overlayElement.textContent = 'Reforçar';
-                    overlayElement.style.opacity = Math.min(Math.abs(deltaX) / 100, 1);
-                } else {
-                    overlayElement.style.opacity = 0;
-                }
-            };
-
-            const onPointerUp = (e) => {
-                if (!isDragging) return;
-                isDragging = false;
-                window.removeEventListener('pointermove', onPointerMove);
-                window.removeEventListener('pointerup', onPointerUp);
-
-                const deltaX = e.clientX - startX;
-                const threshold = window.innerWidth / 4;
-                cardElement.style.transition = 'transform 0.4s ease-out';
-                overlayElement.style.transition = 'opacity 0.4s ease-out';
-                overlayElement.style.opacity = 0;
-                
-                let statusUpdate = null;
-                if (deltaX > threshold) {
-                    cardElement.style.transform = `translateX(120%) rotate(30deg)`;
-                    statusUpdate = 'learned';
-                } else if (deltaX < -threshold) {
-                    cardElement.style.transform = `translateX(-120%) rotate(-30deg)`;
-                    statusUpdate = 'in_progress';
-                } else {
-                    cardElement.style.transform = 'translateX(0) rotate(0)';
-                }
-
-                if (statusUpdate) {
-                    setTimeout(() => updateCardStatus(cardId, statusUpdate), 300);
-                }
-            };
-
-            cardElement.addEventListener('pointerdown', onPointerDown);
         }
 
         function populateVoiceList() {
@@ -617,6 +552,7 @@
             ui.micButton.disabled = true;
         }
 
+        // --- EVENT LISTENERS ---
         ui.deckSelector.addEventListener('change', (e) => {
             state.currentDeckName = e.target.value;
             state.currentCardIndex = 0;
@@ -646,6 +582,20 @@
         ui.viewListBtn.addEventListener('click', () => {
             state.currentView = 'list';
             renderViews();
+        });
+
+        ui.reinforceBtn.addEventListener('click', async () => {
+            const card = state.activeCardList[state.currentCardIndex];
+            if (!card) return;
+            await updateCardStatus(card.id, 'in_progress');
+            showNextCard();
+        });
+
+        ui.learnedBtn.addEventListener('click', async () => {
+            const card = state.activeCardList[state.currentCardIndex];
+            if (!card) return;
+            await updateCardStatus(card.id, 'learned');
+            showNextCard();
         });
         
         let modalMode = 'add-card';
