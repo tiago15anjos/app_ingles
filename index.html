@@ -479,19 +479,24 @@
             ui.wordListScreen.innerHTML = createListHTML('Precisa de Reforço', toReinforce, 'text-yellow-500') + createListHTML('Aprendidas', learned, 'text-green-500');
         }
 
-        let startX = 0, currentX = 0, isDragging = false, cardElement, overlayElement;
+        let startX = 0;
         function initSwipe(element, cardId) {
-            cardElement = element;
-            overlayElement = element.querySelector('#swipe-overlay');
-            cardElement.addEventListener('pointerdown', (e) => {
+            const cardElement = element;
+            const overlayElement = element.querySelector('#swipe-overlay');
+            let isDragging = false;
+            
+            const onPointerDown = (e) => {
                 isDragging = true;
                 startX = e.clientX;
                 cardElement.style.transition = 'none';
                 overlayElement.style.transition = 'opacity 0.2s ease-in-out';
-            });
-            window.addEventListener('pointermove', (e) => {
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            };
+
+            const onPointerMove = (e) => {
                 if (!isDragging) return;
-                currentX = e.clientX;
+                const currentX = e.clientX;
                 const deltaX = currentX - startX;
                 const rotation = deltaX / 20;
                 cardElement.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
@@ -507,31 +512,37 @@
                 } else {
                     overlayElement.style.opacity = 0;
                 }
-            });
-            window.addEventListener('pointerup', async (e) => {
+            };
+
+            const onPointerUp = (e) => {
                 if (!isDragging) return;
                 isDragging = false;
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+
                 const deltaX = e.clientX - startX;
                 const threshold = window.innerWidth / 4;
-                cardElement.style.transition = 'transform 0.4s ease';
-                overlayElement.style.transition = 'opacity 0.4s ease';
+                cardElement.style.transition = 'transform 0.4s ease-out';
+                overlayElement.style.transition = 'opacity 0.4s ease-out';
                 overlayElement.style.opacity = 0;
                 
                 let statusUpdate = null;
                 if (deltaX > threshold) {
-                    cardElement.style.transform = `translateX(1000px) rotate(30deg)`;
+                    cardElement.style.transform = `translateX(120%) rotate(30deg)`;
                     statusUpdate = 'learned';
                 } else if (deltaX < -threshold) {
-                    cardElement.style.transform = `translateX(-1000px) rotate(-30deg)`;
+                    cardElement.style.transform = `translateX(-120%) rotate(-30deg)`;
                     statusUpdate = 'in_progress';
                 } else {
                     cardElement.style.transform = 'translateX(0) rotate(0)';
                 }
 
                 if (statusUpdate) {
-                    updateCardStatus(cardId, statusUpdate);
+                    setTimeout(() => updateCardStatus(cardId, statusUpdate), 300);
                 }
-            });
+            };
+
+            cardElement.addEventListener('pointerdown', onPointerDown);
         }
 
         function populateVoiceList() {
