@@ -72,6 +72,13 @@
             transform: translateX(100%);
             left: calc(100% - 22px);
         }
+        .view-btn.active {
+            border-bottom-width: 2px;
+            --tw-border-opacity: 1;
+            border-color: rgb(59 130 246 / var(--tw-border-opacity));
+            --tw-text-opacity: 1;
+            color: rgb(59 130 246 / var(--tw-text-opacity));
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -81,23 +88,19 @@
         <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
             <h1 class="text-3xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">Bem-vindo(a)!</h1>
             <p class="text-center text-gray-600 dark:text-gray-400 mb-8">Faça login para continuar</p>
-            
             <div class="space-y-4">
                 <input type="email" id="email-input" placeholder="E-mail" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
                 <input type="password" id="password-input" placeholder="Senha" class="w-full p-3 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
             </div>
-
             <div class="flex space-x-2 mt-6">
                 <button id="login-btn" class="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">Entrar</button>
                 <button id="register-btn" class="w-full py-3 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-semibold hover:bg-gray-400">Registrar</button>
             </div>
-
             <div class="relative flex py-5 items-center">
                 <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
                 <span class="flex-shrink mx-4 text-gray-400">OU</span>
                 <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
             </div>
-
             <button id="google-login-btn" class="w-full py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-gray-800 dark:text-white flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600">
                 <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google logo" class="w-6 h-6 mr-2">
                 Entrar com Google
@@ -118,7 +121,7 @@
                 <select id="deck-selector" class="w-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2"></select>
                 <button id="new-deck-btn" title="Novo Deck" class="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus"></i></button>
             </div>
-            <div class="flex items-center justify-between mt-4">
+            <div class="flex items-center justify-between mt-4 flex-wrap gap-2">
                 <button id="add-card-btn" class="text-sm bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Adicionar</button>
                 <button id="edit-card-btn" class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Editar</button>
                 <button id="delete-card-btn" class="text-sm bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md">Excluir</button>
@@ -130,42 +133,57 @@
             </div>
         </div>
 
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
-            <label for="review-mode-toggle" class="flex items-center justify-between cursor-pointer">
-                <span class="font-semibold text-gray-700 dark:text-gray-300">Treinar apenas o que precisa de reforço</span>
-                <div class="relative">
-                    <input type="checkbox" id="review-mode-toggle" class="sr-only">
-                    <div class="toggle-bg block bg-gray-300 dark:bg-gray-600 w-11 h-6 rounded-full"></div>
+        <!-- ABAS DE VISUALIZAÇÃO -->
+        <div class="flex border-b border-gray-300 dark:border-gray-600 mb-4">
+            <button id="view-study-btn" class="view-btn flex-1 py-2 text-center font-semibold active">Estudar</button>
+            <button id="view-list-btn" class="view-btn flex-1 py-2 text-center font-semibold text-gray-500">Minhas Palavras</button>
+        </div>
+
+        <!-- TELA DE ESTUDO -->
+        <div id="study-screen">
+            <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
+                <label for="review-mode-toggle" class="flex items-center justify-between cursor-pointer">
+                    <span class="font-semibold text-gray-700 dark:text-gray-300">Treinar apenas o que precisa de reforço</span>
+                    <div class="relative">
+                        <input type="checkbox" id="review-mode-toggle" class="sr-only">
+                        <div class="toggle-bg block bg-gray-300 dark:bg-gray-600 w-11 h-6 rounded-full"></div>
+                    </div>
+                </label>
+            </div>
+
+            <div id="flashcard-container" class="relative perspective-1000 min-h-[16rem]">
+                <div class="absolute inset-0 flex items-center justify-center text-gray-400">
+                    <i class="fas fa-arrow-left mr-2"></i><span>Reforçar</span>
+                    <span class="mx-4">|</span>
+                    <span>Aprendido</span><i class="fas fa-arrow-right ml-2"></i>
                 </div>
-            </label>
+            </div>
+
+            <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+                <h3 class="text-lg font-semibold mb-2 text-center">Prática de Pronúncia</h3>
+                <div class="flex items-center justify-center space-x-4">
+                    <button id="listen-button" title="Ouvir a pronúncia" class="w-16 h-16 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-md"><i class="fas fa-volume-up text-2xl"></i></button>
+                    <button id="mic-button" title="Gravar sua pronúncia" class="w-20 h-20 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-lg"><i id="mic-icon" class="fas fa-microphone text-3xl"></i></button>
+                </div>
+                <div id="feedback" class="mt-3 text-center h-12 flex items-center justify-center"><p id="feedback-text" class="text-lg font-medium"></p></div>
+                <div class="mt-3">
+                    <label for="voice-selector" class="text-sm font-medium text-gray-600 dark:text-gray-400">Voz:</label>
+                    <select id="voice-selector" class="w-full mt-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm"></select>
+                    <label for="voice-rate" class="text-sm font-medium text-gray-600 dark:text-gray-400 mt-2 block">Velocidade:</label>
+                    <input type="range" id="voice-rate" min="0.5" max="1.5" step="0.1" value="0.9" class="w-full mt-1">
+                </div>
+            </div>
+            
+            <div class="text-center mt-4"><p id="card-counter" class="text-sm text-gray-500 dark:text-gray-400"></p></div>
         </div>
 
-        <div id="flashcard-container" class="relative perspective-1000 min-h-[16rem]">
-            <div class="absolute inset-0 flex items-center justify-center text-gray-400">
-                <i class="fas fa-arrow-left mr-2"></i><span>Reforçar</span>
-                <span class="mx-4">|</span>
-                <span>Aprendido</span><i class="fas fa-arrow-right ml-2"></i>
-            </div>
+        <!-- TELA DA LISTA DE PALAVRAS -->
+        <div id="word-list-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg max-h-[60vh] overflow-y-auto">
+            <!-- Conteúdo da lista será gerado pelo JS -->
         </div>
-
-        <div class="mt-4 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-            <h3 class="text-lg font-semibold mb-2 text-center">Prática de Pronúncia</h3>
-            <div class="flex items-center justify-center space-x-4">
-                <button id="listen-button" title="Ouvir a pronúncia" class="w-16 h-16 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-md"><i class="fas fa-volume-up text-2xl"></i></button>
-                <button id="mic-button" title="Gravar sua pronúncia" class="w-20 h-20 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-transform transform hover:scale-110 shadow-lg"><i id="mic-icon" class="fas fa-microphone text-3xl"></i></button>
-            </div>
-            <div id="feedback" class="mt-3 text-center h-12 flex items-center justify-center"><p id="feedback-text" class="text-lg font-medium"></p></div>
-            <div class="mt-3">
-                <label for="voice-selector" class="text-sm font-medium text-gray-600 dark:text-gray-400">Voz:</label>
-                <select id="voice-selector" class="w-full mt-1 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm"></select>
-                <label for="voice-rate" class="text-sm font-medium text-gray-600 dark:text-gray-400 mt-2 block">Velocidade:</label>
-                <input type="range" id="voice-rate" min="0.5" max="1.5" step="0.1" value="0.9" class="w-full mt-1">
-            </div>
-        </div>
-        
-        <div class="text-center mt-4"><p id="card-counter" class="text-sm text-gray-500 dark:text-gray-400"></p></div>
     </div>
 
+    <!-- MODAL -->
     <div id="modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
         <div class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm transform -translate-y-10">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-center"></h2>
@@ -186,7 +204,6 @@
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, writeBatch, getDocs, updateDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Suas chaves de conexão do Firebase.
         const firebaseConfig = {
             apiKey: "AIzaSyBrZaBIRNiyjOIty5FvcmvEHk4iXLM6VRc",
             authDomain: "app-ingles-888b1.firebaseapp.com",
@@ -236,6 +253,10 @@
             listenButton: document.getElementById('listen-button'),
             modalCancelBtn: document.getElementById('modal-cancel-btn'),
             modalSaveBtn: document.getElementById('modal-save-btn'),
+            viewStudyBtn: document.getElementById('view-study-btn'),
+            viewListBtn: document.getElementById('view-list-btn'),
+            studyScreen: document.getElementById('study-screen'),
+            wordListScreen: document.getElementById('word-list-screen'),
         };
 
         let state = {
@@ -245,10 +266,11 @@
             currentCardIndex: 0,
             isReviewMode: false,
             activeCardList: [],
-            editingCard: null, // To store the card being edited
+            editingCard: null,
             unsubscribe: null,
             voices: [],
             selectedVoiceURI: localStorage.getItem('selectedVoiceURI') || null,
+            currentView: 'study',
         };
 
         // --- AUTHENTICATION LOGIC ---
@@ -345,10 +367,27 @@
             await updateDoc(deckRef, { cards: deck.cards, score: deck.score });
         }
 
+        // --- RENDER & VIEW LOGIC ---
         function render() {
             renderDeckSelector();
             updateActiveCardList();
-            renderCard();
+            renderViews();
+        }
+        
+        function renderViews() {
+            if (state.currentView === 'study') {
+                ui.studyScreen.classList.remove('hidden');
+                ui.wordListScreen.classList.add('hidden');
+                ui.viewStudyBtn.classList.add('active');
+                ui.viewListBtn.classList.remove('active');
+                renderCard();
+            } else { // 'list'
+                ui.studyScreen.classList.add('hidden');
+                ui.wordListScreen.classList.remove('hidden');
+                ui.viewStudyBtn.classList.remove('active');
+                ui.viewListBtn.classList.add('active');
+                renderWordList();
+            }
         }
 
         function renderDeckSelector() {
@@ -411,6 +450,34 @@
             initSwipe(cardWrapper, cardData.id);
         }
         
+        function renderWordList() {
+            const deck = state.decks[state.currentDeckName];
+            if (!deck || deck.cards.length === 0) {
+                ui.wordListScreen.innerHTML = `<p class="text-center text-gray-500">Nenhum card neste deck.</p>`;
+                return;
+            }
+
+            const toReinforce = deck.cards.filter(c => c.status !== 'learned');
+            const learned = deck.cards.filter(c => c.status === 'learned');
+
+            let html = '';
+            if (toReinforce.length > 0) {
+                html += `<h3 class="text-lg font-semibold mb-2 text-yellow-500">Precisa de Reforço</h3><ul class="space-y-2 mb-6">`;
+                toReinforce.forEach(card => {
+                    html += `<li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex justify-between"><span><strong>${card.en}</strong></span> <span>${card.pt}</span></li>`;
+                });
+                html += `</ul>`;
+            }
+            if (learned.length > 0) {
+                html += `<h3 class="text-lg font-semibold mb-2 text-green-500">Aprendidas</h3><ul class="space-y-2">`;
+                learned.forEach(card => {
+                    html += `<li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex justify-between"><span><strong>${card.en}</strong></span> <span>${card.pt}</span></li>`;
+                });
+                html += `</ul>`;
+            }
+            ui.wordListScreen.innerHTML = html;
+        }
+
         let startX = 0, currentX = 0, isDragging = false, cardElement, overlayElement;
         function initSwipe(element, cardId) {
             cardElement = element;
@@ -448,16 +515,25 @@
                 cardElement.style.transition = 'transform 0.4s ease';
                 overlayElement.style.transition = 'opacity 0.4s ease';
                 overlayElement.style.opacity = 0;
+                
+                let statusUpdate = null;
                 if (deltaX > threshold) {
                     cardElement.style.transform = `translateX(1000px) rotate(30deg)`;
-                    await updateCardStatus(cardId, 'learned');
+                    statusUpdate = 'learned';
                 } else if (deltaX < -threshold) {
                     cardElement.style.transform = `translateX(-1000px) rotate(-30deg)`;
-                    await updateCardStatus(cardId, 'in_progress');
+                    statusUpdate = 'in_progress';
                 } else {
                     cardElement.style.transform = 'translateX(0) rotate(0)';
                 }
-                // We don't call showNextCard here, as onSnapshot will re-render
+
+                if (statusUpdate) {
+                    // Delay data update to allow animation to finish
+                    setTimeout(async () => {
+                        await updateCardStatus(cardId, statusUpdate);
+                        // onSnapshot will trigger the re-render of the next card
+                    }, 300);
+                }
             });
         }
 
@@ -555,6 +631,15 @@
             }
         });
         
+        ui.viewStudyBtn.addEventListener('click', () => {
+            state.currentView = 'study';
+            renderViews();
+        });
+        ui.viewListBtn.addEventListener('click', () => {
+            state.currentView = 'list';
+            renderViews();
+        });
+        
         let modalMode = 'add-card';
         function openModal(mode, cardToEdit = null) {
             modalMode = mode;
@@ -594,19 +679,13 @@
         ui.deleteCardBtn.addEventListener('click', async () => {
             const cardToDelete = state.activeCardList[state.currentCardIndex];
             if (!cardToDelete) return;
-
-            // Simple confirmation for now. A custom modal would be better.
-            if (!confirm(`Tem certeza que deseja excluir o card "${cardToDelete.en}"?`)) {
-                return;
-            }
+            if (!confirm(`Tem certeza que deseja excluir o card "${cardToDelete.en}"?`)) return;
 
             const collectionPath = `decks/${state.userId}/userDecks`;
             const deck = state.decks[state.currentDeckName];
             deck.cards = deck.cards.filter(c => c.id !== cardToDelete.id);
-            
             const deckRef = doc(db, collectionPath, state.currentDeckName);
             await updateDoc(deckRef, { cards: deck.cards });
-            // onSnapshot will handle the re-render
         });
 
         ui.newDeckBtn.addEventListener('click', () => openModal('add-deck'));
