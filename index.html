@@ -8,15 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
         body {
             font-family: 'Inter', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .card {
             transform-style: preserve-3d;
@@ -96,7 +89,7 @@
     </div>
 
     <!-- CONTEÚDO PRINCIPAL DO APP -->
-    <div id="app-content" class="w-full max-w-md mx-auto hidden flex flex-col h-full max-h-[95vh]">
+    <div id="app-content" class="w-full max-w-md mx-auto hidden">
         <header class="flex-shrink-0">
             <div class="flex justify-between items-center mb-4">
                  <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">English Flashcards</h1>
@@ -124,7 +117,7 @@
             </div>
         </header>
 
-        <main class="flex-grow overflow-y-auto pb-4">
+        <main class="pb-4">
             <!-- TELA DE ESTUDO -->
             <div id="study-screen">
                 <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4">
@@ -271,7 +264,7 @@
             if (user) {
                 state.userId = user.uid;
                 ui.authScreen.style.display = 'none';
-                ui.appContent.style.display = 'flex';
+                ui.appContent.style.display = 'block';
                 loadUserData();
             } else {
                 state.userId = null;
