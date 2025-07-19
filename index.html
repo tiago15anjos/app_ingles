@@ -441,17 +441,11 @@
         }
 
         function showNextCard() {
-            if (state.activeCardList.length > 1) {
-                if(state.isReviewMode) {
-                    updateActiveCardList();
-                    renderCard();
-                    return;
-                }
+            if (state.activeCardList.length > 0) {
                 state.currentCardIndex = (state.currentCardIndex + 1) % state.activeCardList.length;
             } else {
                 state.currentCardIndex = 0;
             }
-            updateActiveCardList();
             renderCard();
         }
         
@@ -595,7 +589,10 @@
         ui.reinforceBtn.addEventListener('click', async () => {
             const card = state.activeCardList[state.currentCardIndex];
             if (!card) return;
-            await updateCardStatus(card.id, 'in_progress');
+            // No modo de reforço, apenas avança. No modo normal, marca para reforço.
+            if (!state.isReviewMode) {
+                 await updateCardStatus(card.id, 'in_progress');
+            }
             showNextCard();
         });
 
@@ -603,7 +600,11 @@
             const card = state.activeCardList[state.currentCardIndex];
             if (!card) return;
             await updateCardStatus(card.id, 'learned');
-            showNextCard();
+            // No modo de reforço, a lista será atualizada e o próximo card aparecerá.
+            // No modo normal, precisamos avançar manualmente.
+            if (!state.isReviewMode) {
+                showNextCard();
+            }
         });
         
         let modalMode = 'add-card';
