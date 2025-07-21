@@ -58,7 +58,6 @@
             --tw-text-opacity: 1;
             color: rgb(59 130 246 / var(--tw-text-opacity));
         }
-        /* Estilos para o Jogo de Associação */
         .match-item {
             transition: background-color 0.2s, color 0.2s, transform 0.2s, opacity 0.3s;
         }
@@ -82,6 +81,14 @@
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
+        }
+        .verb-input.correct {
+            border-color: rgb(34 197 94);
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+        .verb-input.incorrect {
+            border-color: rgb(239 68 68);
+            background-color: rgba(239, 68, 68, 0.1);
         }
     </style>
 </head>
@@ -121,7 +128,7 @@
                  <button id="logout-btn" title="Sair" class="p-2 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"><i class="fas fa-sign-out-alt text-xl"></i></button>
             </div>
             
-            <div class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
+            <div id="deck-controls" class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
                 <div class="flex items-center justify-between">
                     <select id="deck-selector" class="w-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2"></select>
                     <button id="new-deck-btn" title="Novo Deck" class="ml-2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus"></i></button>
@@ -140,6 +147,7 @@
                 <button id="view-study-btn" class="view-btn flex-1 py-2 text-center font-semibold active">Estudar</button>
                 <button id="view-list-btn" class="view-btn flex-1 py-2 text-center font-semibold text-gray-500">Minhas Palavras</button>
                 <button id="view-match-btn" class="view-btn flex-1 py-2 text-center font-semibold text-gray-500">Associar</button>
+                <button id="view-verbs-btn" class="view-btn flex-1 py-2 text-center font-semibold text-gray-500">Verbos</button>
             </div>
         </header>
 
@@ -156,9 +164,7 @@
                     </label>
                 </div>
 
-                <div id="flashcard-container" class="relative perspective-1000 h-56">
-                    <!-- Card será renderizado aqui -->
-                </div>
+                <div id="flashcard-container" class="relative perspective-1000 h-56"></div>
                 
                 <div id="study-actions" class="mt-4 grid grid-cols-2 gap-4">
                      <button id="reinforce-btn" class="py-3 px-4 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 transition-transform transform hover:scale-105">
@@ -188,16 +194,38 @@
             </div>
 
             <!-- TELA DA LISTA DE PALAVRAS -->
-            <div id="word-list-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg">
-                <!-- Conteúdo da lista será gerado pelo JS -->
-            </div>
+            <div id="word-list-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg"></div>
             
             <!-- TELA DO JOGO DE ASSOCIAÇÃO -->
             <div id="match-screen" class="hidden bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-lg">
-                <div id="match-game-container" class="grid grid-cols-2 gap-3">
-                    <!-- Colunas do jogo serão geradas aqui -->
-                </div>
+                <div id="match-game-container" class="grid grid-cols-2 gap-3"></div>
                 <div id="match-game-feedback" class="text-center mt-4"></div>
+            </div>
+            
+            <!-- TELA DO JOGO DE VERBOS -->
+            <div id="verb-game-screen" class="hidden bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg space-y-4">
+                 <div id="verb-game-container">
+                    <p class="text-center text-gray-500 dark:text-gray-400">Infinitivo</p>
+                    <h2 id="verb-infinitive" class="text-3xl font-bold text-center text-blue-600 dark:text-blue-400 mb-6"></h2>
+                    
+                    <div>
+                        <label for="past-simple-input" class="font-semibold">Past Simple</label>
+                        <input type="text" id="past-simple-input" class="verb-input w-full p-3 mt-1 bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg">
+                        <p id="past-simple-answer" class="text-green-500 text-sm mt-1 h-4"></p>
+                    </div>
+                    
+                     <div>
+                        <label for="past-participle-input" class="font-semibold">Past Participle</label>
+                        <input type="text" id="past-participle-input" class="verb-input w-full p-3 mt-1 bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg">
+                        <p id="past-participle-answer" class="text-green-500 text-sm mt-1 h-4"></p>
+                    </div>
+                 </div>
+                 <div id="verb-game-actions" class="flex flex-col space-y-2">
+                    <button id="check-verb-btn" class="w-full py-3 bg-blue-500 text-white rounded-lg font-semibold">Verificar</button>
+                    <button id="show-answer-btn" class="w-full py-2 bg-gray-300 dark:bg-gray-600 text-sm rounded-lg">Ver Resposta</button>
+                    <button id="next-verb-btn" class="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hidden">Próximo Verbo</button>
+                    <button id="listen-verb-btn" class="w-full py-2 bg-purple-500 text-white rounded-lg font-semibold hidden"><i class="fas fa-volume-up mr-2"></i>Ouvir Pronúncia</button>
+                 </div>
             </div>
         </main>
     </div>
@@ -247,6 +275,7 @@
             googleLoginBtn: document.getElementById('google-login-btn'),
             logoutBtn: document.getElementById('logout-btn'),
             authError: document.getElementById('auth-error'),
+            deckControls: document.getElementById('deck-controls'),
             deckSelector: document.getElementById('deck-selector'),
             score: document.getElementById('score'),
             flashcardContainer: document.getElementById('flashcard-container'),
@@ -273,11 +302,22 @@
             viewStudyBtn: document.getElementById('view-study-btn'),
             viewListBtn: document.getElementById('view-list-btn'),
             viewMatchBtn: document.getElementById('view-match-btn'),
+            viewVerbsBtn: document.getElementById('view-verbs-btn'),
             studyScreen: document.getElementById('study-screen'),
             wordListScreen: document.getElementById('word-list-screen'),
             matchScreen: document.getElementById('match-screen'),
             matchGameContainer: document.getElementById('match-game-container'),
             matchGameFeedback: document.getElementById('match-game-feedback'),
+            verbGameScreen: document.getElementById('verb-game-screen'),
+            verbInfinitive: document.getElementById('verb-infinitive'),
+            pastSimpleInput: document.getElementById('past-simple-input'),
+            pastParticipleInput: document.getElementById('past-participle-input'),
+            pastSimpleAnswer: document.getElementById('past-simple-answer'),
+            pastParticipleAnswer: document.getElementById('past-participle-answer'),
+            checkVerbBtn: document.getElementById('check-verb-btn'),
+            showAnswerBtn: document.getElementById('show-answer-btn'),
+            nextVerbBtn: document.getElementById('next-verb-btn'),
+            listenVerbBtn: document.getElementById('listen-verb-btn'),
             reinforceBtn: document.getElementById('reinforce-btn'),
             learnedBtn: document.getElementById('learned-btn'),
             studyActions: document.getElementById('study-actions'),
@@ -286,21 +326,19 @@
         let state = {
             userId: null,
             decks: {},
+            irregularVerbs: [],
             currentDeckName: null,
             currentCardIndex: 0,
             isReviewMode: false,
             activeCardList: [],
             editingCard: null,
             unsubscribe: null,
+            unsubscribeVerbs: null,
             voices: [],
             selectedVoiceURI: localStorage.getItem('selectedVoiceURI') || null,
             currentView: 'study',
-            matchGame: {
-                allCards: [],
-                currentBatch: [],
-                selectedEn: null,
-                selectedPt: null,
-            }
+            matchGame: { allCards: [], currentBatch: [], selectedEn: null, selectedPt: null },
+            verbGame: { currentVerb: null }
         };
 
         // --- AUTHENTICATION LOGIC ---
@@ -310,45 +348,22 @@
                 ui.authScreen.style.display = 'none';
                 ui.appContent.style.display = 'block';
                 loadUserData();
+                loadVerbData();
             } else {
                 state.userId = null;
                 if(state.unsubscribe) state.unsubscribe();
+                if(state.unsubscribeVerbs) state.unsubscribeVerbs();
                 state.decks = {};
+                state.irregularVerbs = [];
                 ui.authScreen.style.display = 'block';
                 ui.appContent.style.display = 'none';
             }
         });
 
-        ui.loginBtn.addEventListener('click', async () => {
-            try {
-                await signInWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value);
-                ui.authError.textContent = '';
-            } catch (error) {
-                ui.authError.textContent = "E-mail ou senha inválidos.";
-            }
-        });
-
-        ui.registerBtn.addEventListener('click', async () => {
-             try {
-                await createUserWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value);
-                ui.authError.textContent = '';
-            } catch (error) {
-                ui.authError.textContent = error.code === 'auth/email-already-in-use' ? "Este e-mail já está em uso." : "Erro ao registrar.";
-            }
-        });
-
-        ui.googleLoginBtn.addEventListener('click', async () => {
-            try {
-                const provider = new GoogleAuthProvider();
-                await signInWithPopup(auth, provider);
-                ui.authError.textContent = '';
-            } catch (error) {
-                ui.authError.textContent = "Erro ao fazer login com Google.";
-            }
-        });
-
+        ui.loginBtn.addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value); ui.authError.textContent = ''; } catch (error) { ui.authError.textContent = "E-mail ou senha inválidos."; } });
+        ui.registerBtn.addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, ui.emailInput.value, ui.passwordInput.value); ui.authError.textContent = ''; } catch (error) { ui.authError.textContent = error.code === 'auth/email-already-in-use' ? "Este e-mail já está em uso." : "Erro ao registrar."; } });
+        ui.googleLoginBtn.addEventListener('click', async () => { try { const provider = new GoogleAuthProvider(); await signInWithPopup(auth, provider); ui.authError.textContent = ''; } catch (error) { ui.authError.textContent = "Erro ao fazer login com Google."; } });
         ui.logoutBtn.addEventListener('click', () => signOut(auth));
-
 
         // --- DATA & APP LOGIC ---
         async function loadUserData() {
@@ -356,7 +371,6 @@
             const collectionRef = collection(db, collectionPath);
             const initialCheck = await getDocs(collectionRef);
             if (initialCheck.empty) await createDefaultDecks(collectionPath);
-
             if (state.unsubscribe) state.unsubscribe();
             state.unsubscribe = onSnapshot(collectionRef, (snapshot) => {
                 state.decks = {};
@@ -367,7 +381,6 @@
                 render();
             });
         }
-
         async function createDefaultDecks(collectionPath) {
             const batch = writeBatch(db);
             const defaultDecks = {
@@ -380,19 +393,15 @@
             }
             await batch.commit();
         }
-
         async function updateCardStatus(cardId, newStatus) {
             const collectionPath = `decks/${state.userId}/userDecks`;
             const deck = state.decks[state.currentDeckName];
             const card = deck.cards.find(c => c.id === cardId);
             if (!card || card.status === newStatus) return;
-            
             const oldStatus = card.status;
             card.status = newStatus;
-
             if (newStatus === 'learned' && oldStatus !== 'learned') deck.score++;
             else if (oldStatus === 'learned' && newStatus !== 'learned') deck.score--;
-            
             const deckRef = doc(db, collectionPath, state.currentDeckName);
             await updateDoc(deckRef, { cards: deck.cards, score: deck.score });
         }
@@ -403,14 +412,12 @@
             updateActiveCardList();
             renderViews();
         }
-        
         function renderViews() {
-            ui.studyScreen.classList.add('hidden');
-            ui.wordListScreen.classList.add('hidden');
-            ui.matchScreen.classList.add('hidden');
-            ui.viewStudyBtn.classList.remove('active');
-            ui.viewListBtn.classList.remove('active');
-            ui.viewMatchBtn.classList.remove('active');
+            const screens = [ui.studyScreen, ui.wordListScreen, ui.matchScreen, ui.verbGameScreen];
+            const buttons = [ui.viewStudyBtn, ui.viewListBtn, ui.viewMatchBtn, ui.viewVerbsBtn];
+            screens.forEach(s => s.classList.add('hidden'));
+            buttons.forEach(b => b.classList.remove('active'));
+            ui.deckControls.style.display = 'block';
 
             if (state.currentView === 'study') {
                 ui.studyScreen.classList.remove('hidden');
@@ -420,13 +427,17 @@
                 ui.wordListScreen.classList.remove('hidden');
                 ui.viewListBtn.classList.add('active');
                 renderWordList();
-            } else { // 'match'
+            } else if (state.currentView === 'match') {
                 ui.matchScreen.classList.remove('hidden');
                 ui.viewMatchBtn.classList.add('active');
                 startMatchGame();
+            } else { // 'verbs'
+                ui.verbGameScreen.classList.remove('hidden');
+                ui.viewVerbsBtn.classList.add('active');
+                ui.deckControls.style.display = 'none'; // Hide deck controls for verb game
+                startVerbGame();
             }
         }
-
         function renderDeckSelector() {
             ui.deckSelector.innerHTML = '';
             Object.keys(state.decks).forEach(deckName => {
@@ -437,31 +448,18 @@
                 ui.deckSelector.appendChild(option);
             });
         }
-        
         function updateActiveCardList() {
             const deck = state.decks[state.currentDeckName];
-            if (!deck) {
-                state.activeCardList = [];
-                return;
-            }
-            if (state.isReviewMode) {
-                state.activeCardList = deck.cards.filter(c => c.status === 'new' || c.status === 'in_progress');
-            } else {
-                state.activeCardList = [...deck.cards];
-            }
-            if (state.currentCardIndex >= state.activeCardList.length) {
-                state.currentCardIndex = 0;
-            }
+            if (!deck) { state.activeCardList = []; return; }
+            state.activeCardList = state.isReviewMode ? deck.cards.filter(c => c.status !== 'learned') : [...deck.cards];
+            if (state.currentCardIndex >= state.activeCardList.length) state.currentCardIndex = 0;
         }
-
         function renderCard() {
             ui.flashcardContainer.innerHTML = '';
             const deck = state.decks[state.currentDeckName];
             ui.score.textContent = deck ? deck.score : 0;
-
             const hasCards = state.activeCardList.length > 0;
             ui.studyActions.style.display = hasCards ? 'grid' : 'none';
-
             if (!hasCards) {
                 ui.flashcardContainer.innerHTML = `<div class="text-center p-10 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">${state.isReviewMode ? 'Nenhum card para reforçar!' : 'Adicione um card para começar!'}</div>`;
                 ui.cardCounter.textContent = '0 de 0';
@@ -469,7 +467,6 @@
             }
             const cardData = state.activeCardList[state.currentCardIndex];
             if (!cardData) return;
-
             const cardWrapper = document.createElement('div');
             cardWrapper.className = 'card-wrapper w-full h-full cursor-pointer';
             cardWrapper.innerHTML = `
@@ -485,51 +482,40 @@
                 </div>`;
             ui.flashcardContainer.appendChild(cardWrapper);
             ui.cardCounter.textContent = `Card ${state.currentCardIndex + 1} de ${state.activeCardList.length}`;
-            
-            cardWrapper.querySelector('#flashcard').addEventListener('click', (e) => {
-                e.currentTarget.classList.toggle('is-flipped');
-            });
+            cardWrapper.querySelector('#flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('is-flipped'));
         }
-
         function showNextCard() {
-            if (state.activeCardList.length > 0) {
+            if (state.activeCardList.length > 1 && !state.isReviewMode) {
                 state.currentCardIndex = (state.currentCardIndex + 1) % state.activeCardList.length;
             } else {
                 state.currentCardIndex = 0;
             }
+            updateActiveCardList();
             renderCard();
         }
-        
         function renderWordList() {
             const deck = state.decks[state.currentDeckName];
             if (!deck || deck.cards.length === 0) {
                 ui.wordListScreen.innerHTML = `<p class="text-center text-gray-500">Nenhum card neste deck.</p>`;
                 return;
             }
-
             const toReinforce = deck.cards.filter(c => c.status !== 'learned');
             const learned = deck.cards.filter(c => c.status === 'learned');
-
             const createListHTML = (title, cards, titleColor) => {
                 if (cards.length === 0) return '';
                 let listHtml = `<h3 class="text-lg font-semibold mb-2 ${titleColor}">${title}</h3><ul class="space-y-2 mb-6">`;
                 cards.forEach(card => {
                     listHtml += `
                         <li class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-between">
-                            <div class="flex-1">
-                                <strong class="dark:text-white">${card.en}</strong>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">${card.pt}</p>
-                            </div>
+                            <div class="flex-1"><strong class="dark:text-white">${card.en}</strong><p class="text-sm text-gray-500 dark:text-gray-400">${card.pt}</p></div>
                             <div class="flex space-x-3">
                                 <button class="edit-word-btn text-blue-500 hover:text-blue-700" data-card-id="${card.id}"><i class="fas fa-edit"></i></button>
                                 <button class="delete-word-btn text-red-500 hover:text-red-700" data-card-id="${card.id}"><i class="fas fa-trash"></i></button>
                             </div>
                         </li>`;
                 });
-                listHtml += `</ul>`;
-                return listHtml;
+                return listHtml + `</ul>`;
             };
-
             ui.wordListScreen.innerHTML = createListHTML('Precisa de Reforço', toReinforce, 'text-yellow-500') + createListHTML('Aprendidas', learned, 'text-green-500');
         }
 
@@ -543,91 +529,155 @@
             state.matchGame.allCards = [...deck.cards].sort(() => 0.5 - Math.random());
             loadNextMatchBatch();
         }
-
         function loadNextMatchBatch() {
-            const batchSize = 5;
-            state.matchGame.currentBatch = state.matchGame.allCards.splice(0, batchSize);
+            state.matchGame.currentBatch = state.matchGame.allCards.splice(0, 5);
             renderMatchGame();
         }
-
         function renderMatchGame() {
             const { currentBatch } = state.matchGame;
             ui.matchGameContainer.innerHTML = '';
             ui.matchGameFeedback.textContent = '';
 
             if (currentBatch.length === 0) {
-                ui.matchGameContainer.innerHTML = `<div class="col-span-2 text-center py-8">
-                    <h3 class="text-2xl font-bold text-green-500">Parabéns!</h3>
-                    <p class="text-gray-500">Você associou todos os cards do deck.</p>
-                    <button id="restart-match-btn" class="mt-4 py-2 px-4 bg-blue-500 text-white rounded-lg">Jogar Novamente</button>
-                </div>`;
+                ui.matchGameContainer.innerHTML = `<div class="col-span-2 text-center py-8"><h3 class="text-2xl font-bold text-green-500">Parabéns!</h3><p class="text-gray-500">Você associou todos os cards do deck.</p><button id="restart-match-btn" class="mt-4 py-2 px-4 bg-blue-500 text-white rounded-lg">Jogar Novamente</button></div>`;
                 document.getElementById('restart-match-btn').addEventListener('click', startMatchGame);
                 return;
             }
-            
             const enWords = [...currentBatch].sort(() => 0.5 - Math.random());
             const ptWords = [...currentBatch].sort(() => 0.5 - Math.random());
-
-            const enColumn = document.createElement('div');
-            enColumn.className = 'space-y-2';
-            enWords.forEach(card => {
-                enColumn.innerHTML += `<button class="match-item w-full p-3 bg-gray-200 dark:bg-gray-700 rounded-lg" data-id="${card.id}" data-lang="en">${card.en}</button>`;
-            });
-
-            const ptColumn = document.createElement('div');
-            ptColumn.className = 'space-y-2';
-            ptWords.forEach(card => {
-                ptColumn.innerHTML += `<button class="match-item w-full p-3 bg-gray-200 dark:bg-gray-700 rounded-lg" data-id="${card.id}" data-lang="pt">${card.pt}</button>`;
-            });
-
+            const enColumn = document.createElement('div'); enColumn.className = 'space-y-2';
+            enWords.forEach(card => { enColumn.innerHTML += `<button class="match-item w-full p-3 bg-gray-200 dark:bg-gray-700 rounded-lg" data-id="${card.id}" data-lang="en">${card.en}</button>`; });
+            const ptColumn = document.createElement('div'); ptColumn.className = 'space-y-2';
+            ptWords.forEach(card => { ptColumn.innerHTML += `<button class="match-item w-full p-3 bg-gray-200 dark:bg-gray-700 rounded-lg" data-id="${card.id}" data-lang="pt">${card.pt}</button>`; });
             ui.matchGameContainer.append(enColumn, ptColumn);
         }
-
         ui.matchGameContainer.addEventListener('click', (e) => {
             if (!e.target.classList.contains('match-item')) return;
-            
             const item = e.target;
             const { id, lang } = item.dataset;
-
             if (lang === 'en') {
                 if (state.matchGame.selectedEn) state.matchGame.selectedEn.classList.remove('selected');
-                state.matchGame.selectedEn = item;
-                item.classList.add('selected');
-            } else { // lang === 'pt'
+                state.matchGame.selectedEn = item; item.classList.add('selected');
+            } else {
                 if (state.matchGame.selectedPt) state.matchGame.selectedPt.classList.remove('selected');
-                state.matchGame.selectedPt = item;
-                item.classList.add('selected');
+                state.matchGame.selectedPt = item; item.classList.add('selected');
             }
-
             const { selectedEn, selectedPt } = state.matchGame;
             if (selectedEn && selectedPt) {
                 if (selectedEn.dataset.id === selectedPt.dataset.id) {
-                    // Correct Match
-                    selectedEn.classList.add('correct');
-                    selectedPt.classList.add('correct');
+                    selectedEn.classList.add('correct'); selectedPt.classList.add('correct');
                     state.matchGame.currentBatch = state.matchGame.currentBatch.filter(c => c.id !== selectedEn.dataset.id);
                     if (state.matchGame.currentBatch.length === 0) {
                         if (state.matchGame.allCards.length > 0) {
                             ui.matchGameFeedback.textContent = 'Carregando próximo nível...';
                             setTimeout(loadNextMatchBatch, 1000);
                         } else {
-                            setTimeout(renderMatchGame, 1000); // Show completion message
+                            setTimeout(renderMatchGame, 1000);
                         }
                     }
                 } else {
-                    // Incorrect Match
-                    selectedEn.classList.add('incorrect');
-                    selectedPt.classList.add('incorrect');
-                    setTimeout(() => {
-                        selectedEn.classList.remove('incorrect', 'selected');
-                        selectedPt.classList.remove('incorrect', 'selected');
-                    }, 500);
+                    selectedEn.classList.add('incorrect'); selectedPt.classList.add('incorrect');
+                    setTimeout(() => { selectedEn.classList.remove('incorrect', 'selected'); selectedPt.classList.remove('incorrect', 'selected'); }, 500);
                 }
-                state.matchGame.selectedEn = null;
-                state.matchGame.selectedPt = null;
+                state.matchGame.selectedEn = null; state.matchGame.selectedPt = null;
             }
         });
 
+        // --- IRREGULAR VERBS GAME LOGIC ---
+        const initialVerbs = [ { infinitive: "be", pastSimple: "was/were", pastParticiple: "been" }, { infinitive: "become", pastSimple: "became", pastParticiple: "become" }, { infinitive: "begin", pastSimple: "began", pastParticiple: "begun" }, { infinitive: "bring", pastSimple: "brought", pastParticiple: "brought" }, { infinitive: "buy", pastSimple: "bought", pastParticiple: "bought" }, { infinitive: "choose", pastSimple: "chose", pastParticiple: "chosen" }, { infinitive: "come", pastSimple: "came", pastParticiple: "come" }, { infinitive: "do", pastSimple: "did", pastParticiple: "done" }, { infinitive: "drink", pastSimple: "drank", pastParticiple: "drunk" }, { infinitive: "drive", pastSimple: "drove", pastParticiple: "driven" }, { infinitive: "eat", pastSimple: "ate", pastParticiple: "eaten" }, { infinitive: "fall", pastSimple: "fell", pastParticiple: "fallen" }, { infinitive: "feel", pastSimple: "felt", pastParticiple: "felt" }, { infinitive: "find", pastSimple: "found", pastParticiple: "found" }, { infinitive: "fly", pastSimple: "flew", pastParticiple: "flown" }, { infinitive: "forget", pastSimple: "forgot", pastParticiple: "forgotten" }, { infinitive: "get", pastSimple: "got", pastParticiple: "got" }, { infinitive: "give", pastSimple: "gave", pastParticiple: "given" }, { infinitive: "go", pastSimple: "went", pastParticiple: "gone" }, { infinitive: "have", pastSimple: "had", pastParticiple: "had" }, { infinitive: "hear", pastSimple: "heard", pastParticiple: "heard" }, { infinitive: "keep", pastSimple: "kept", pastParticiple: "kept" }, { infinitive: "know", pastSimple: "knew", pastParticiple: "known" }, { infinitive: "leave", pastSimple: "left", pastParticiple: "left" }, { infinitive: "lend", pastSimple: "lent", pastParticiple: "lent" }, { infinitive: "let", pastSimple: "let", pastParticiple: "let" }, { infinitive: "lose", pastSimple: "lost", pastParticiple: "lost" }, { infinitive: "make", pastSimple: "made", pastParticiple: "made" }, { infinitive: "meet", pastSimple: "met", pastParticiple: "met" }, { infinitive: "pay", pastSimple: "paid", pastParticiple: "paid" }, { infinitive: "put", pastSimple: "put", pastParticiple: "put" }, { infinitive: "read", pastSimple: "read", pastParticiple: "read" }, { infinitive: "run", pastSimple: "ran", pastParticiple: "run" }, { infinitive: "say", pastSimple: "said", pastParticiple: "said" }, { infinitive: "see", pastSimple: "saw", pastParticiple: "seen" }, { infinitive: "sell", pastSimple: "sold", pastParticiple: "sold" }, { infinitive: "send", pastSimple: "sent", pastParticiple: "sent" }, { infinitive: "sing", pastSimple: "sang", pastParticiple: "sung" }, { infinitive: "sit", pastSimple: "sat", pastParticiple: "sat" }, { infinitive: "sleep", pastSimple: "slept", pastParticiple: "slept" }, { infinitive: "speak", pastSimple: "spoke", pastParticiple: "spoken" }, { infinitive: "stand", pastSimple: "stood", pastParticiple: "stood" }, { infinitive: "swim", pastSimple: "swam", pastParticiple: "swum" }, { infinitive: "take", pastSimple: "took", pastParticiple: "taken" }, { infinitive: "teach", pastSimple: "taught", pastParticiple: "taught" }, { infinitive: "tell", pastSimple: "told", pastParticiple: "told" }, { infinitive: "think", pastSimple: "thought", pastParticiple: "thought" }, { infinitive: "understand", pastSimple: "understood", pastParticiple: "understood" }, { infinitive: "wear", pastSimple: "wore", pastParticiple: "worn" }, { infinitive: "write", pastSimple: "wrote", pastParticiple: "written" } ];
+        async function loadVerbData() {
+            const docRef = doc(db, `verbs/${state.userId}`);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) {
+                const initialVerbData = initialVerbs.map(v => ({ ...v, score: 0 }));
+                await setDoc(docRef, { verbs: initialVerbData });
+            }
+            if (state.unsubscribeVerbs) state.unsubscribeVerbs();
+            state.unsubscribeVerbs = onSnapshot(docRef, (doc) => {
+                state.irregularVerbs = doc.data()?.verbs || [];
+            });
+        }
+        function startVerbGame() {
+            const verbsToPractice = state.irregularVerbs.filter(v => v.score < 3).sort((a, b) => a.score - b.score);
+            const practicePool = verbsToPractice.length > 0 ? verbsToPractice : state.irregularVerbs;
+            state.verbGame.currentVerb = practicePool[Math.floor(Math.random() * practicePool.length)];
+            renderVerbGame();
+        }
+        function renderVerbGame() {
+            const { currentVerb } = state.verbGame;
+            if (!currentVerb) { ui.verbGameScreen.innerHTML = '<p>Carregando verbos...</p>'; return; }
+            
+            ui.verbInfinitive.textContent = currentVerb.infinitive;
+            [ui.pastSimpleInput, ui.pastParticipleInput].forEach(input => {
+                input.value = '';
+                input.disabled = false;
+                input.className = 'verb-input w-full p-3 mt-1 bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg';
+            });
+            [ui.pastSimpleAnswer, ui.pastParticipleAnswer].forEach(p => p.textContent = '');
+            ui.checkVerbBtn.classList.remove('hidden');
+            ui.showAnswerBtn.classList.remove('hidden');
+            ui.nextVerbBtn.classList.add('hidden');
+            ui.listenVerbBtn.classList.add('hidden');
+        }
+        async function updateVerbScore(verb, correct) {
+            const verbToUpdate = state.irregularVerbs.find(v => v.infinitive === verb.infinitive);
+            if (correct) {
+                verbToUpdate.score = (verbToUpdate.score || 0) + 1;
+            } else {
+                verbToUpdate.score = 0; // Reset on error
+            }
+            const docRef = doc(db, `verbs/${state.userId}`);
+            await setDoc(docRef, { verbs: state.irregularVerbs });
+        }
+        ui.checkVerbBtn.addEventListener('click', () => {
+            const { currentVerb } = state.verbGame;
+            const psInput = ui.pastSimpleInput.value.trim().toLowerCase();
+            const ppInput = ui.pastParticipleInput.value.trim().toLowerCase();
+            
+            let psCorrect = currentVerb.pastSimple.split('/').includes(psInput);
+            let ppCorrect = currentVerb.pastParticiple.split('/').includes(ppInput);
+
+            ui.pastSimpleInput.classList.add(psCorrect ? 'correct' : 'incorrect');
+            ui.pastParticipleInput.classList.add(ppCorrect ? 'correct' : 'incorrect');
+            
+            if (!psCorrect) ui.pastSimpleAnswer.textContent = `Correto: ${currentVerb.pastSimple}`;
+            if (!ppCorrect) ui.pastParticipleAnswer.textContent = `Correto: ${currentVerb.pastParticiple}`;
+
+            [ui.pastSimpleInput, ui.pastParticipleInput].forEach(input => input.disabled = true);
+            ui.checkVerbBtn.classList.add('hidden');
+            ui.showAnswerBtn.classList.add('hidden');
+            ui.nextVerbBtn.classList.remove('hidden');
+            
+            if (psCorrect && ppCorrect) {
+                updateVerbScore(currentVerb, true);
+                ui.listenVerbBtn.classList.remove('hidden');
+            } else {
+                updateVerbScore(currentVerb, false);
+            }
+        });
+        ui.showAnswerBtn.addEventListener('click', () => {
+            const { currentVerb } = state.verbGame;
+            ui.pastSimpleInput.value = currentVerb.pastSimple;
+            ui.pastParticipleInput.value = currentVerb.pastParticiple;
+            [ui.pastSimpleInput, ui.pastParticipleInput].forEach(input => {
+                input.classList.add('correct');
+                input.disabled = true;
+            });
+            ui.checkVerbBtn.classList.add('hidden');
+            ui.showAnswerBtn.classList.add('hidden');
+            ui.nextVerbBtn.classList.remove('hidden');
+            updateVerbScore(currentVerb, false);
+        });
+        ui.nextVerbBtn.addEventListener('click', startVerbGame);
+        ui.listenVerbBtn.addEventListener('click', () => {
+            const { currentVerb } = state.verbGame;
+            const textToSpeak = `${currentVerb.infinitive}, ${currentVerb.pastSimple.split('/')[0]}, ${currentVerb.pastParticiple.split('/')[0]}`;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            const selectedVoice = state.voices.find(v => v.voiceURI === state.selectedVoiceURI);
+            utterance.voice = selectedVoice || state.voices[0];
+            utterance.rate = ui.voiceRate.value;
+            speechSynthesis.speak(utterance);
+        });
 
         // --- SPEECH & VOICE LOGIC ---
         function populateVoiceList() {
@@ -725,18 +775,10 @@
             }
         });
         
-        ui.viewStudyBtn.addEventListener('click', () => {
-            state.currentView = 'study';
-            renderViews();
-        });
-        ui.viewListBtn.addEventListener('click', () => {
-            state.currentView = 'list';
-            renderViews();
-        });
-        ui.viewMatchBtn.addEventListener('click', () => {
-            state.currentView = 'match';
-            renderViews();
-        });
+        ui.viewStudyBtn.addEventListener('click', () => { state.currentView = 'study'; renderViews(); });
+        ui.viewListBtn.addEventListener('click', () => { state.currentView = 'list'; renderViews(); });
+        ui.viewMatchBtn.addEventListener('click', () => { state.currentView = 'match'; renderViews(); });
+        ui.viewVerbsBtn.addEventListener('click', () => { state.currentView = 'verbs'; renderViews(); });
 
         ui.reinforceBtn.addEventListener('click', async () => {
             const card = state.activeCardList[state.currentCardIndex];
